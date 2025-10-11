@@ -12,12 +12,18 @@
     "bcrypt": "^5.1.1",
     "cloudinary": "^1.21.0",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "ejs-mate": "^4.0.0",
     "express": "^4.21.2",
     "joi": "^17.13.3",
     "mongoose": "^8.8.4",
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
-    "nodemon": "^3.1.7"
+    "nodemailer": "^7.0.6",
+    "nodemon": "^3.1.7",
+    "puppeteer": "^24.23.1",
+    "url": "^0.11.4"
   }
 }

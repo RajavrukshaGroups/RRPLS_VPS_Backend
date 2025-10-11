@@ -7,6 +7,7 @@ const userRoute = require('./routes/routes.js');
 const app = express();  
 const port = 5000;
 
+
 // Connect to the database
 dbConnect();
 
@@ -31,6 +32,8 @@ app.options('*', cors());
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
+
+
 
 
 

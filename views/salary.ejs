@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>
+      PAY SLIP FOR <%= salary.payMonthName %> - <%= salary.payYear %>
+    </title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      /* Print/page sizing: make sure this matches the puppeteer PDF margin (10mm) */
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
+
+      body {
+        font-family: "Times New Roman", Times, serif;
+        color: #000;
+        margin: 0;
+        background: #fff;
+      }
+      /* .page {
+        width: 820px;
+        margin: 18px auto;
+        box-sizing: border-box;
+        border: 3px solid #000;
+        background: #fff;
+        padding: 0;
+      } */
+
+      .page {
+        width: calc(
+          210mm - 20mm
+        ); /* A4 width (210mm) minus left+right margins (10mm + 10mm) */
+        max-width: calc(210mm - 20mm);
+        margin: 0 auto;
+        box-sizing: border-box; /* include border in width calculation */
+        border: 3px solid #000;
+        background: #fff;
+        padding: 0;
+      }
+
+      /* header */
+      .header {
+        text-align: center;
+        padding: 8px 12px 0;
+      }
+      .header img {
+        max-height: 60px; /* Reduced from 72px */
+        max-width: 200px; /* Added to control width */
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        display: inline-block;
+      }
+      .company {
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        margin-top: 6px;
+      }
+      .title {
+        text-align: center;
+        font-weight: 900;
+        letter-spacing: 1px;
+        font-size: 18px;
+        border-bottom: 2px solid #000;
+        padding: 8px 0;
+        margin: 8px 0;
+      }
+
+      /* employee box with single center divider */
+      .emp-box {
+        display: flex;
+        margin-top: -0.5rem;
+      }
+      .emp-left,
+      .emp-right {
+        width: 50%;
+        padding: 12px 18px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
+      .emp-right {
+        border-left: 3px solid #000;
+      } /* center divider */
+      table.emp-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      td.label {
+        width: 40%;
+        font-weight: 700;
+        padding: 4px 6px;
+        vertical-align: top;
+        white-space: nowrap;
+      }
+      td.value {
+        padding: 4px 6px;
+        vertical-align: top;
+        text-align: right;
+        width: 60%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* attendance row */
+      .attendance {
+        display: flex;
+        border-top: 1px solid #000;
+        border-bottom: 1px solid #000;
+      }
+      .att-left,
+      .att-right {
+        width: 50%;
+        padding: 10px 18px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
+      .att-right {
+        border-left: 3px solid #000;
+      }
+      /* New styles for attendance table */
+      table.att-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .att-table td.label {
+        width: 60%;
+        font-weight: 700;
+        padding: 4px 6px;
+        vertical-align: top;
+        white-space: nowrap;
+      }
+      .att-table td.value {
+        padding: 4px 6px;
+        vertical-align: top;
+        text-align: right;
+        width: 40%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* pay table - FIXED for 50:50 split */
+      .pay-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        font-size: 14px;
+        margin-bottom: -0.5rem;
+        table-layout: fixed; /* Added for consistent column distribution */
+      }
+      .pay-table thead th {
+        padding: 10px;
+        font-weight: 900;
+        text-align: center;
+        border-bottom: 3px solid #000;
+        background: transparent;
+      }
+      .pay-table th,
+      .pay-table td {
+        padding: 8px 12px;
+        vertical-align: middle;
+      }
+      .pay-table td:nth-child(3),
+      .pay-table th:nth-child(3) {
+        border-left: 3px solid #000;
+        padding-left: 18px;
+      } /* center divider */
+
+      /* FIXED: Equal 50:50 distribution for earnings and deductions */
+      .pay-table th:nth-child(1),
+      .pay-table th:nth-child(2) {
+        width: 25%; /* Each earnings column gets 25% (total 50%) */
+      }
+      .pay-table th:nth-child(3),
+      .pay-table th:nth-child(4) {
+        width: 25%; /* Each deductions column gets 25% (total 50%) */
+      }
+
+      .pay-table td:first-child,
+      .pay-table td:nth-child(3) {
+        width: 60%; /* Item names - consistent with other sections */
+        text-align: left;
+        padding-left: 12px;
+      }
+      .pay-table td:nth-child(2),
+      .pay-table td:nth-child(4) {
+        width: 40%; /* Amounts - consistent with other sections */
+        text-align: right;
+        padding-right: 12px;
+      }
+
+      .amount {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        min-width: 110px;
+      }
+
+      /* totals inside table */
+      .bold {
+        font-weight: 900;
+      }
+
+      /* net pay bar under table */
+      .net-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 3px solid #000;
+        margin-top: 6px;
+        padding: 8px 12px;
+        font-weight: 900;
+      }
+      .net-bar .left {
+        font-size: 14px;
+      }
+      .net-bar .right {
+        font-size: 16px;
+      }
+
+      .footer {
+        text-align: center;
+        border-top: 1px solid #000;
+        padding: 6px 8px;
+        margin-top: 6px;
+        font-size: 12px;
+        color: #111;
+      }
+
+      /* @media print {
+        .page {
+          border: none;
+          width: 100%;
+          margin: 0;
+          box-shadow: none;
+        }
+      } */
+      /* no print override that hides border - keep border visible in print */
+      @media print {
+        /* keep border; don't set .page { border: none } */
+        body {
+          -webkit-print-color-adjust: exact;
+        }
+        .page {
+          box-shadow: none;
+        } /* avoid drop shadows in print */
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+      <div class="header">
+        <% if (company && company.logo && company.logo.url) { %>
+        <img src="<%= company.logo.url %>" alt="<%= company.name %> logo" />
+        <% } %>
+      </div>
+
+      <div class="company"><%= company?.name || "" %></div>
+      <div class="company"><%= company?.address || "" %></div>
+      <div class="title">
+        PAY SLIP FOR <%= salary.payMonthName %> - <%= salary.payYear %>
+      </div>
+
+      <!-- employee details -->
+      <div class="emp-box" role="region" aria-label="Employee details">
+        <div class="emp-left">
+          <table class="emp-table">
+            <tr>
+              <td class="label">Name:</td>
+              <td class="value"><%= employee?.name || "-" %></td>
+            </tr>
+            <tr>
+              <td class="label">Emp. ID:</td>
+              <td class="value"><%= employee?.empId || "-" %></td>
+            </tr>
+            <tr>
+              <td class="label">Designation:</td>
+              <td class="value"><%= employee?.designation || "-" %></td>
+            </tr>
+            <tr>
+              <td class="label">Department:</td>
+              <td class="value"><%= department?.name || "-" %></td>
+            </tr>
+            <tr>
+              <td class="label">DOJ:</td>
+              <td class="value">
+                <%= employee?.doj ? new Date(employee.doj).toLocaleDateString()
+                : "-" %>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="emp-right">
+          <table class="emp-table">
+            <tr>
+              <td class="label">UAN:</td>
+              <td class="value"><%= employee?.UAN || "-" %></td>
+            </tr>
+            <tr>
+              <td class="label">PF No.:</td>
+              <td class="value"><%= employee?.pfNo || "-" %></td>
+            </tr>
+            <tr>
+              <td class="label">ESI No.:</td>
+              <td class="value"><%= employee?.esiNo || "-" %></td>
+            </tr>
+            <tr>
+              <td class="label">Bank Name:</td>
+              <td class="value"><%= employee?.bankName || "-" %></td>
+            </tr>
+            <tr>
+              <td class="label">Bank A/c No.:</td>
+              <td class="value"><%= employee?.bankAccountNo || "-" %></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- attendance -->
+      <div class="attendance" role="region" aria-label="Attendance">
+        <div class="att-left">
+          <table class="att-table">
+            <tr>
+              <td class="label">Total Working Days:</td>
+              <td class="value"><%= salary?.totalWorkingDays ?? 0 %></td>
+            </tr>
+            <tr>
+              <td class="label">LOP Days:</td>
+              <td class="value"><%= salary?.lopDays ?? 0 %></td>
+            </tr>
+          </table>
+        </div>
+        <div class="att-right">
+          <table class="att-table">
+            <tr>
+              <td class="label">Paid Days:</td>
+              <td class="value"><%= salary?.paidDays ?? 0 %></td>
+            </tr>
+            <tr>
+              <td class="label">Leaves Taken:</td>
+              <td class="value">
+                <!-- <%= ((salary?.totalWorkingDays ?? 0) - (salary?.paidDays ?? 0))
+                %> -->
+                <%= salary?.leaves_taken ?? 0%>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- earnings & deductions table (totals INSIDE the table) -->
+      <table
+        class="pay-table"
+        role="table"
+        aria-label="Earnings and Deductions"
+      >
+        <thead>
+          <tr>
+            <th colspan="2">EARNINGS</th>
+            <th colspan="2">DEDUCTIONS</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>Basic Salary</td>
+            <td class="amount">
+              <%= (fmt?.basicSalary && fmt.basicSalary !== "0.00") ?
+              fmt.basicSalary : "-" %>
+            </td>
+            <td>EPF</td>
+            <td class="amount">
+              <%= (fmt?.epf && fmt.epf !== "0.00") ? fmt.epf : "-" %>
+            </td>
+          </tr>
+
+          <tr>
+            <td>VDA</td>
+            <td class="amount">
+              <%= (fmt?.vda && fmt.vda !== "0.00") ? fmt.vda : "-" %>
+            </td>
+            <td>ESIC</td>
+            <td class="amount">
+              <%= (fmt?.esic && fmt.esic !== "0.00") ? fmt.esic : "-" %>
+            </td>
+          </tr>
+
+          <tr>
+            <td>House Rent Allowances</td>
+            <td class="amount">
+              <%= (fmt?.hra && fmt.hra !== "0.00") ? fmt.hra : "-" %>
+            </td>
+            <td>PT</td>
+            <td class="amount">
+              <%= (fmt?.professionalTax && fmt.professionalTax !== "0.00") ?
+              fmt.professionalTax : "-" %>
+            </td>
+          </tr>
+
+          <tr>
+            <td>Travel Allowances</td>
+            <td class="amount">
+              <%= (fmt?.trAllowance && fmt.trAllowance !== "0.00") ?
+              fmt.trAllowance : "-" %>
+            </td>
+            <td>Advance</td>
+            <td class="amount">
+              <%= (fmt?.advance && fmt.advance !== "0.00") ? fmt.advance : "-"
+              %>
+            </td>
+          </tr>
+
+          <tr>
+            <td>Special Allowances</td>
+            <td class="amount">
+              <%= (fmt?.specialAllowance && fmt.specialAllowance !== "0.00") ?
+              fmt.specialAllowance : "-" %>
+            </td>
+            <td>LOP</td>
+            <td class="amount">
+              <%= (fmt?.lop && fmt.lop !== "0.00") ? fmt.lop : "-" %>
+            </td>
+          </tr>
+
+          <!-- Totals inside table -->
+          <tr>
+            <td class="bold">Total Earnings</td>
+            <td class="amount bold"><%= fmt?.totalEarnings || "-" %></td>
+            <td class="bold">Total Deductions</td>
+            <td class="amount bold"><%= fmt?.totalDeductions || "-" %></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- large NET PAY (in numbers) strip below the table -->
+      <div class="net-bar" role="note" aria-label="Net pay in numbers">
+        <div class="left">NET PAY (in numbers)</div>
+        <div class="right"><%= fmt?.netPay || "-" %></div>
+      </div>
+
+      <div class="footer">
+        (This is System Generated and do not require any Signatures)
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,8 +1,9 @@
 const mongoose = require("mongoose");
 
 const dbConnect = () => {
-  const  cluster_url = 'mongodb+srv://enquiry:mHpnVFW1fNgdla8h@cluster0.osdmv.mongodb.net/';
-  // const url = "mongodb://localhost:27017/RRPL_Admin";
+  const cluster_url =
+    "mongodb+srv://enquiry:mHpnVFW1fNgdla8h@cluster0.osdmv.mongodb.net/";
+  // const cluster_url = "mongodb://localhost:27017/RRPL_Admin";
 
   mongoose
     .connect(cluster_url)

@@ -5,7 +5,7 @@ const cors = require('cors');
 const { dbConnect } = require('./config/config.js');
 const userRoute = require('./routes/routes.js');
 const app = express();  
-const port = 3000;
+const port = 5000;
 
 // Connect to the database
 dbConnect();

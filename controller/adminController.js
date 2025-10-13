@@ -151,9 +151,7 @@ const adminSendOTP = async (req, res) => {
 //   }
 // };
 
-const adminVerifyOTP=async(req,res)=>{
-  
-}
+const adminVerifyOTP = async (req, res) => {};
 
 const addCompany = async (req, res) => {
   try {
@@ -1367,57 +1365,57 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
         : undefined;
     }
 
-    // if (body.email !== undefined) {
-    //   if (!body.email) {
-    //     // clear if explicitly empty
-    //     updates.email = undefined;
-    //   } else {
-    //     const emailRaw = String(body.email).trim().toLowerCase();
-    //     const emailRe = /^\S+@\S+\.\S+$/;
-    //     if (!emailRe.test(emailRaw)) {
-    //       return res
-    //         .status(400)
-    //         .json({ success: false, message: "Invalid email format" });
-    //     }
-    //     // uniqueness check excluding current employee
-    //     const dupEmail = await Employee.findOne({
-    //       email: emailRaw,
-    //       _id: { $ne: employeeId },
-    //     }).lean();
-    //     if (dupEmail) {
-    //       return res
-    //         .status(409)
-    //         .json({ success: false, message: "Email already in use" });
-    //     }
-    //     updates.email = emailRaw;
-    //   }
-    // }
+    if (body.email !== undefined) {
+      if (!body.email) {
+        // clear if explicitly empty
+        updates.email = undefined;
+      } else {
+        const emailRaw = String(body.email).trim().toLowerCase();
+        const emailRe = /^\S+@\S+\.\S+$/;
+        if (!emailRe.test(emailRaw)) {
+          return res
+            .status(400)
+            .json({ success: false, message: "Invalid email format" });
+        }
+        // uniqueness check excluding current employee
+        const dupEmail = await Employee.findOne({
+          email: emailRaw,
+          _id: { $ne: employeeId },
+        }).lean();
+        if (dupEmail) {
+          return res
+            .status(409)
+            .json({ success: false, message: "Email already in use" });
+        }
+        updates.email = emailRaw;
+      }
+    }
 
-    // if (body.mobileNumber !== undefined) {
-    //   if (!body.mobileNumber) {
-    //     updates.mobileNumber = undefined;
-    //   } else {
-    //     const mobileRaw = String(body.mobileNumber).trim();
-    //     const mobileRe = /^[0-9]{10}$/;
-    //     if (!mobileRe.test(mobileRaw)) {
-    //       return res.status(400).json({
-    //         success: false,
-    //         message: "Invalid mobile number. Expect 10 digits.",
-    //       });
-    //     }
-    //     // uniqueness check excluding current employee
-    //     const dupMobile = await Employee.findOne({
-    //       mobileNumber: mobileRaw,
-    //       _id: { $ne: employeeId },
-    //     }).lean();
-    //     if (dupMobile) {
-    //       return res
-    //         .status(409)
-    //         .json({ success: false, message: "Mobile number already in use" });
-    //     }
-    //     updates.mobileNumber = mobileRaw;
-    //   }
-    // }
+    if (body.mobileNumber !== undefined) {
+      if (!body.mobileNumber) {
+        updates.mobileNumber = undefined;
+      } else {
+        const mobileRaw = String(body.mobileNumber).trim();
+        const mobileRe = /^[0-9]{10}$/;
+        if (!mobileRe.test(mobileRaw)) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid mobile number. Expect 10 digits.",
+          });
+        }
+        // uniqueness check excluding current employee
+        const dupMobile = await Employee.findOne({
+          mobileNumber: mobileRaw,
+          _id: { $ne: employeeId },
+        }).lean();
+        if (dupMobile) {
+          return res
+            .status(409)
+            .json({ success: false, message: "Mobile number already in use" });
+        }
+        updates.mobileNumber = mobileRaw;
+      }
+    }
 
     // Allow updating dateOfJoining (accept ISO or DD-MM-YYYY)
     if (body.dateOfJoining !== undefined) {
@@ -3312,9 +3310,32 @@ const sendSalarySlipByEmail = async (req, res) => {
       // prepare email transporter
       const smtpHost = process.env.SMTP_HOST;
       const smtpPort = Number(process.env.SMTP_PORT || 587);
-      const smtpUser = process.env.SMTP_USER;
-      const smtpPass = process.env.SMTP_PASS;
-      const mailFrom = process.env.MAIL_FROM || smtpUser;
+      // const smtpUser = process.env.SMTP_USER;
+      const smtpUser = process.env.RAJAVRUKSHA_MAIL;
+      // const smtpPass = process.env.SMTP_PASS;
+      const smtpPass = process.env.RAJAVRUKSHA_SMTP_PASS;
+
+      // const mailFrom = process.env.MAIL_FROM || smtpUser;
+      const mailFrom = `HR Department <${
+        process.env.RAJAVRUKSHA_MAIL || smtpUser
+      }>`;
+
+      // let smtpUser, smtpPass, mailFrom;
+
+      // const companyEmail = company?.companyEmail?.toLowerCase() || "";
+      // if (companyEmail === process.env.RAJAVRUKSHA_MAIL?.toLowerCase()) {
+      //   smtpUser = process.env.RAJAVRUKSHA_MAIL;
+      //   smtpPass = process.env.RAJAVRUKSHA_SMTP_PASS;
+      //   mailFrom = `HR Department <${smtpUser}>`;
+      // } else if (companyEmail === process.env.DHS_MAIL?.toLowerCase()) {
+      //   smtpUser = process.env.DHS_MAIL;
+      //   smtpPass = process.env.DHS_SMTP_PASS;
+      //   mailFrom = `HR Department <${smtpUser}>`;
+      // } else {
+      //   smtpUser = process.env.SMTP_USER;
+      //   smtpPass = process.env.SMTP_PASS;
+      //   mailFrom = process.env.FROM_EMAIL || smtpUser;
+      // }
 
       if (!smtpHost || !smtpUser || !smtpPass) {
         return res

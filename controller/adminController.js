@@ -3410,6 +3410,14 @@ const sendSalarySlipByEmail = async (req, res) => {
   }
 };
 
+const sendAllEmployeesSalarySlips=async(req,res)=>{
+  try{
+
+  }catch(err){
+
+  }
+}
+
 module.exports = {
   adminSendOTP,
   adminVerifyOTP,
@@ -3432,4 +3440,5 @@ module.exports = {
   editIndEmployeeSalaryDetails,
   readSalarySlipTemplateById,
   sendSalarySlipByEmail,
+  sendAllEmployeesSalarySlips,
 };

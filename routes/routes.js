@@ -6,6 +6,7 @@ const upload = multer({ storage });
 const usersController = require("../controller/userController");
 const careerController = require("../controller/careerController");
 const adminController = require("../controller/adminController");
+const accountController = require("../controller/accountsController");
 
 router.post("/login", usersController.login);
 router.post("/admin/verify-otp", usersController.adminVerifyOTP);
@@ -107,6 +108,12 @@ router.get(
 router.post(
   "/slip/admin/companies/:companyId/departments/:deptId/employees/:employeeId/salary/:salaryId",
   adminController.sendSalarySlipByEmail
+);
+
+//send mail-->accounts team
+router.post(
+  "/sendall/admin/companies/:companyId/departments/:deptId/employees",
+  accountController.sendAllEmployeesSalarySlipsToAccountsTeam
 );
 
 module.exports = router;

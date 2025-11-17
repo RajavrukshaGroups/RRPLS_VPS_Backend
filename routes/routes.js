@@ -91,6 +91,11 @@ router.get(
   "/admin/companies/:companyId/departments/:deptId/employees/:employeeId",
   adminController.getIndEmployeeSalaryDetails
 );
+
+router.get(
+  "/admin/companies/:companyId/departments/:deptId/fetchStoredEmpSalary/:employeeId",
+  adminController.fetchStoredEmployeeSalaryDetails
+);
 router.delete(
   "/admin/companies/:companyId/departments/:deptId/employees/:employeeId/salaries/:salaryId",
   adminController.deleteIndEmployeeSalaryDetails

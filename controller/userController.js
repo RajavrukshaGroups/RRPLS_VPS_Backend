@@ -114,7 +114,6 @@ const login = async (req, res) => {
   }
 };
 
-
 const adminVerifyOTP = async (req, res) => {
   try {
     const { otp } = req.body;
@@ -157,4 +156,6 @@ const adminVerifyOTP = async (req, res) => {
   }
 };
 
-module.exports = { login, adminVerifyOTP };
+const verifyDeploy = async (req, res) => {};
+
+module.exports = { login, adminVerifyOTP, verifyDeploy };

@@ -1004,6 +1004,12 @@ const createEmployeeRecord = async (req, res) => {
       });
     }
 
+    // if (!/^[0-9]{10}$/.test(altmobileNumber)) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Valid 10-digit alternative mobile number is required",
+    //   });
+    // }
     // check company exists
     const company = await AdminCompany.findById(companyId).lean();
     if (!company) {
@@ -1050,22 +1056,121 @@ const createEmployeeRecord = async (req, res) => {
       }
     }
 
+    let doe;
+    if (body.dateOfExit) {
+      const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/;
+      const m = String(body.dateOfExit).trim().match(ddmmyyyy);
+      if (m) {
+        const [, dd, mm, yyyy] = m;
+        doe = new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
+      } else {
+        const maybe = new Date(body.dateOfExit);
+        if (!isNaN(maybe.getTime())) doe = maybe;
+      }
+    }
+
+    let dob;
+    if (body.dateOfBirth) {
+      const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/;
+      const m = String(body.dateOfBirth).trim().match(ddmmyyyy);
+      if (m) {
+        const [, dd, mm, yyyy] = m;
+        dob = new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
+      } else {
+        const maybe = new Date(body.dateOfBirth);
+        if (!isNaN(maybe.getTime())) dob = maybe;
+      }
+    }
+
+    let fatherdob;
+    if (body.fatherDOB) {
+      const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/;
+      const m = String(body.fatherDOB).trim().match(ddmmyyyy);
+      if (m) {
+        const [, dd, mm, yyyy] = m;
+        fatherdob = new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
+      } else {
+        const maybe = new Date(body.fatherDOB);
+        if (!isNaN(maybe.getTime())) fatherdob = maybe;
+      }
+    }
+
+    let motherdob;
+    if (body.motherDOB) {
+      const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/;
+      const m = String(body.motherDOB).trim().match(ddmmyyyy);
+      if (m) {
+        const [, dd, mm, yyyy] = m;
+        motherdob = new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
+      } else {
+        const maybe = new Date(body.motherDOB);
+        if (!isNaN(maybe.getTime())) motherdob = maybe;
+      }
+    }
+
+    let spousedob;
+    if (body.spouseDOB) {
+      const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/;
+      const m = String(body.spouseDOB).trim().match(ddmmyyyy);
+      if (m) {
+        const [, dd, mm, yyyy] = m;
+        spousedob = new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
+      } else {
+        const maybe = new Date(body.spouseDOB);
+        if (!isNaN(maybe.getTime())) spousedob = maybe;
+      }
+    }
+
     // build document and encrypt sensitive fields
 
     const newEmployeeData = {
       employeeName: employeeName.trim(),
+      nameAsPerAadhar: body.nameAsPerAadhar.trim(),
       employeeId: employeeId.trim(),
       designation: body.designation
         ? String(body.designation).trim()
         : undefined,
       company: companyId,
       department: deptId,
+      status: body.status,
+      dateOfBirth: dob || undefined,
       dateOfJoining: doj || undefined,
+      dateOfExit: doe || undefined,
       email: email.trim().toLowerCase(),
       mobileNumber: mobileNumber.trim(),
+      altmobileNumber: body.altmobileNumber,
+      currentAddress: body.currentAddress,
+      permanentAddress: body.permanentAddress,
+      bloodGroup: body.bloodGroup,
+      maritalStatus: body.maritalStatus,
+      fatherName: body.fatherName,
+      fatherDOB: fatherdob || undefined,
+      fatherAadhar: body.fatherAadhar,
+
+      motherName: body.motherName,
+      motherDOB: motherdob || undefined,
+      motherAadhar: body.motherAadhar,
+
+      fatherOrSpouseName: body.fatherOrSpouseName,
+
+      spouseName: body.spouseName,
+      spouseDOB: spousedob || undefined,
+      spouseAadhar: body.spouseAadhar,
+
+      emergencyContactName: body.emergencyContactName,
+      emergencyContactNumber: body.emergencyContactNumber,
+      emergencyContactRelation: body.emergencyContactRelation,
+
+      nomineeName: body.nomineeName,
+      nomineeRelationship: body.nomineeRelationship,
+
+      childrenName: body.childrenName,
+      childrenAadharNumber: body.childrenAadharNumber,
+
       aadhar: body.aadhar
         ? encryptField(String(body.aadhar).trim())
         : undefined,
+      PAN: body.PAN ? encryptField(String(body.PAN).trim()) : undefined,
       UAN: body.UAN ? encryptField(String(body.UAN).trim()) : undefined,
       pfNo: body.pfNo ? encryptField(String(body.pfNo).trim()) : undefined,
       esiNo: body.esiNo ? encryptField(String(body.esiNo).trim()) : undefined,
@@ -1133,6 +1238,180 @@ const createEmployeeRecord = async (req, res) => {
   }
 };
 
+// const viewDepartmentEmployeesUnderCompany = async (req, res) => {
+//   try {
+//     const { companyId, deptId } = req.params;
+//     const page = Math.max(1, parseInt(req.query.page || "1", 10));
+//     const limit = Math.min(
+//       200,
+//       Math.max(1, parseInt(req.query.limit || "15", 10))
+//     );
+//     const reveal = String(req.query.reveal || "false").toLowerCase() === "true";
+
+//     // Validate IDs
+//     if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Valid companyId param is required" });
+//     }
+//     if (!deptId || !mongoose.Types.ObjectId.isValid(deptId)) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Valid deptId param is required" });
+//     }
+
+//     //ensure company exists
+//     const company = await AdminCompany.findById(companyId).lean();
+//     if (!company)
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Company not found" });
+
+//     // Ensure department exists and belongs to the company
+//     const dept = await employeeDept.findById(deptId).lean();
+//     if (!dept)
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Department not found" });
+//     if (String(dept.company) !== String(companyId)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Department does not belong to the specified company",
+//       });
+//     }
+
+//     const skip = (page - 1) * limit;
+//     const [employees, total] = await Promise.all([
+//       Employee.find({ company: companyId, department: deptId })
+//         .sort({ createdAt: -1 })
+//         .skip(skip)
+//         .limit(limit)
+//         .lean(),
+//       Employee.countDocuments({ company: companyId, department: deptId }),
+//     ]);
+
+//     if (!total || total === 0) {
+//       return res.status(200).json({
+//         success: true,
+//         message:
+//           "No employees found for this department under the given company",
+//         company: { _id: company._id, companyName: company.companyName },
+//         department: { _id: dept._id, department: dept.department },
+//         employees: [],
+//         pagination: { total: 0, page, limit, pages: 0 },
+//       });
+//     }
+
+//     // Map employees: attempt to decrypt sensitive fields if decryptField is available.
+//     // By default we mask some PII. If reveal=true and decryptField exists, we'll return decrypted values.
+//     const mapped = employees.map((e) => {
+//       const tryDecryptString = (val) => {
+//         if (!val || typeof val !== "string") return val;
+//         if (!decryptField) return val;
+//         try {
+//           return decryptField(val);
+//         } catch (err) {
+//           console.warn("decrypt failed, returning raw:", err?.message || err);
+//           return val;
+//         }
+//       };
+
+//       const tryDecryptNumber = (val) => {
+//         // val is expected to be an encrypted string (e.g. basicSalaryEnc). Return a Number or null.
+//         if (!val || typeof val !== "string") return null;
+//         if (!decryptField) return null;
+//         try {
+//           const plain = decryptField(val);
+//           if (plain === null || plain === undefined || plain === "")
+//             return null;
+//           const n = parseFloat(String(plain));
+//           return Number.isFinite(n) ? n : null;
+//         } catch (err) {
+//           console.warn("decrypt number failed:", err?.message || err);
+//           return null;
+//         }
+//       };
+
+//       const mask = (val, keepLast = 4) => {
+//         if (!val || typeof val !== "string") return val;
+//         if (val.length <= keepLast) return "*".repeat(val.length);
+//         const last = val.slice(-keepLast);
+//         return "*".repeat(Math.max(0, val.length - keepLast)) + last;
+//       };
+
+//       // If reveal requested, attempt decrypt then return; otherwise return masked stored data.
+//       const aadharRaw = e.aadhar;
+//       const UANRaw = e.UAN;
+//       const bankRaw = e.bankAccountNo;
+//       const bankBranchNameRaw = e.bankBranchName;
+//       const bankIFSCNo = e.bankIFSCNo;
+//       const pfRaw = e.pfNo;
+//       const esiRaw = e.esiNo;
+
+//       // salary ciphertext fields (note names in DB)
+//       const basicSalaryEnc = e.basicSalaryEnc ?? e.basicSalary; // fallback if your DB still has old field names
+//       const hraEnc = e.hraEnc ?? e.hra;
+//       const trAllowanceEnc = e.trAllowanceEnc ?? e.trAllowance;
+//       const specialAllowanceEnc = e.specialAllowanceEnc ?? e.specialAllowance;
+//       const vdaEnc = e.vdaEnc ?? e.vda;
+
+//       return {
+//         _id: e._id,
+//         employeeName:
+//           reveal && decryptField && typeof e.employeeName === "string"
+//             ? tryDecryptString(e.employeeName)
+//             : e.employeeName,
+//         employeeId:
+//           reveal && decryptField && typeof e.employeeId === "string"
+//             ? tryDecryptString(e.employeeId)
+//             : e.employeeId,
+//         designation:
+//           reveal && decryptField && typeof e.designation === "string"
+//             ? tryDecryptString(e.designation)
+//             : e.designation,
+//         dateOfJoining: e.dateOfJoining || null,
+//         // PII fields: return masked values unless reveal=true
+//         aadhar: reveal ? tryDecryptString(aadharRaw) : mask(aadharRaw, 4),
+//         UAN: reveal ? tryDecryptString(UANRaw) : mask(UANRaw, 4),
+//         pfNo: reveal ? tryDecryptString(pfRaw) : mask(pfRaw, 4),
+//         esiNo: reveal ? tryDecryptString(esiRaw) : mask(esiRaw, 4),
+//         bankName: e.bankName || null,
+//         bankAccountNo: reveal ? tryDecryptString(bankRaw) : mask(bankRaw, 4),
+//         bankBranchName: reveal
+//           ? tryDecryptString(bankBranchNameRaw)
+//           : mask(bankBranchNameRaw, 4),
+//         bankIFSCNo: reveal ? tryDecryptString(bankIFSCNo) : mask(bankIFSCNo, 4),
+
+//         // SALARY fields: decrypt numbers when reveal=true, otherwise keep null
+//         basicSalary: reveal ? tryDecryptNumber(basicSalaryEnc) : null,
+//         vda: reveal ? tryDecryptNumber(vdaEnc) : null,
+//         hra: reveal ? tryDecryptNumber(hraEnc) : null,
+//         trAllowance: reveal ? tryDecryptNumber(trAllowanceEnc) : null,
+//         specialAllowance: reveal ? tryDecryptNumber(specialAllowanceEnc) : null,
+
+//         email: e.email || null,
+//         mobileNumber: e.mobileNumber || null,
+//         createdAt: e.createdAt,
+//         updatedAt: e.updatedAt,
+//       };
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       company: { _id: company._id, companyName: company.companyName },
+//       department: { _id: dept._id, department: dept.department },
+//       pagination: { total, page, limit, pages: Math.ceil(total / limit) },
+//       employees: mapped,
+//     });
+//   } catch (err) {
+//     console.error("viewDepartmentEmployeesUnderCompany error:", err);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server error while fetching employees",
+//     });
+//   }
+// };
+
 const viewDepartmentEmployeesUnderCompany = async (req, res) => {
   try {
     const { companyId, deptId } = req.params;
@@ -1155,7 +1434,7 @@ const viewDepartmentEmployeesUnderCompany = async (req, res) => {
         .json({ success: false, message: "Valid deptId param is required" });
     }
 
-    //ensure company exists
+    // ensure company exists
     const company = await AdminCompany.findById(companyId).lean();
     if (!company)
       return res
@@ -1197,95 +1476,179 @@ const viewDepartmentEmployeesUnderCompany = async (req, res) => {
       });
     }
 
+    // helpers
+    const tryDecryptString = (val) => {
+      if (!val || typeof val !== "string") return val || null;
+      if (typeof decryptField !== "function") return val;
+      try {
+        return decryptField(val);
+      } catch (err) {
+        console.warn("decrypt failed, returning raw:", err?.message || err);
+        return val;
+      }
+    };
+
+    const tryDecryptNumber = (val) => {
+      if (!val || typeof val !== "string") return null;
+      if (typeof decryptField !== "function") return null;
+      try {
+        const plain = decryptField(val);
+        if (plain === null || plain === undefined || plain === "") return null;
+        const n = parseFloat(String(plain));
+        return Number.isFinite(n) ? n : null;
+      } catch (err) {
+        console.warn("decrypt number failed:", err?.message || err);
+        return null;
+      }
+    };
+
+    const mask = (val, keepLast = 4) => {
+      if (val === undefined || val === null) return null;
+      const s = String(val);
+      if (s.length <= keepLast) return "*".repeat(s.length);
+      return "*".repeat(Math.max(0, s.length - keepLast)) + s.slice(-keepLast);
+    };
+
     // Map employees: attempt to decrypt sensitive fields if decryptField is available.
-    // By default we mask some PII. If reveal=true and decryptField exists, we'll return decrypted values.
     const mapped = employees.map((e) => {
-      const tryDecryptString = (val) => {
-        if (!val || typeof val !== "string") return val;
-        if (!decryptField) return val;
-        try {
-          return decryptField(val);
-        } catch (err) {
-          console.warn("decrypt failed, returning raw:", err?.message || err);
-          return val;
-        }
-      };
-
-      const tryDecryptNumber = (val) => {
-        // val is expected to be an encrypted string (e.g. basicSalaryEnc). Return a Number or null.
-        if (!val || typeof val !== "string") return null;
-        if (!decryptField) return null;
-        try {
-          const plain = decryptField(val);
-          if (plain === null || plain === undefined || plain === "")
-            return null;
-          const n = parseFloat(String(plain));
-          return Number.isFinite(n) ? n : null;
-        } catch (err) {
-          console.warn("decrypt number failed:", err?.message || err);
-          return null;
-        }
-      };
-
-      const mask = (val, keepLast = 4) => {
-        if (!val || typeof val !== "string") return val;
-        if (val.length <= keepLast) return "*".repeat(val.length);
-        const last = val.slice(-keepLast);
-        return "*".repeat(Math.max(0, val.length - keepLast)) + last;
-      };
-
-      // If reveal requested, attempt decrypt then return; otherwise return masked stored data.
+      // raw encrypted fields in DB
       const aadharRaw = e.aadhar;
-      const UANRaw = e.UAN;
-      const bankRaw = e.bankAccountNo;
-      const bankBranchNameRaw = e.bankBranchName;
-      const bankIFSCNo = e.bankIFSCNo;
+      const PANraw = e.PAN;
+      const UANraw = e.UAN;
       const pfRaw = e.pfNo;
       const esiRaw = e.esiNo;
-
-      // salary ciphertext fields (note names in DB)
-      const basicSalaryEnc = e.basicSalaryEnc ?? e.basicSalary; // fallback if your DB still has old field names
-      const hraEnc = e.hraEnc ?? e.hra;
-      const trAllowanceEnc = e.trAllowanceEnc ?? e.trAllowance;
-      const specialAllowanceEnc = e.specialAllowanceEnc ?? e.specialAllowance;
-      const vdaEnc = e.vdaEnc ?? e.vda;
+      const bankAccountRaw = e.bankAccountNo;
+      const bankIFSCRaw = e.bankIFSCNo;
+      const basicSalaryEnc = e.basicSalaryEnc ?? e.basicSalary ?? null;
+      const hraEnc = e.hraEnc ?? e.hra ?? null;
+      const trAllowanceEnc = e.trAllowanceEnc ?? e.trAllowance ?? null;
+      const specialAllowanceEnc =
+        e.specialAllowanceEnc ?? e.specialAllowance ?? null;
+      const vdaEnc = e.vdaEnc ?? e.vda ?? null;
 
       return {
         _id: e._id,
-        employeeName:
-          reveal && decryptField && typeof e.employeeName === "string"
-            ? tryDecryptString(e.employeeName)
-            : e.employeeName,
-        employeeId:
-          reveal && decryptField && typeof e.employeeId === "string"
-            ? tryDecryptString(e.employeeId)
-            : e.employeeId,
-        designation:
-          reveal && decryptField && typeof e.designation === "string"
-            ? tryDecryptString(e.designation)
-            : e.designation,
-        dateOfJoining: e.dateOfJoining || null,
-        // PII fields: return masked values unless reveal=true
-        aadhar: reveal ? tryDecryptString(aadharRaw) : mask(aadharRaw, 4),
-        UAN: reveal ? tryDecryptString(UANRaw) : mask(UANRaw, 4),
-        pfNo: reveal ? tryDecryptString(pfRaw) : mask(pfRaw, 4),
-        esiNo: reveal ? tryDecryptString(esiRaw) : mask(esiRaw, 4),
-        bankName: e.bankName || null,
-        bankAccountNo: reveal ? tryDecryptString(bankRaw) : mask(bankRaw, 4),
-        bankBranchName: reveal
-          ? tryDecryptString(bankBranchNameRaw)
-          : mask(bankBranchNameRaw, 4),
-        bankIFSCNo: reveal ? tryDecryptString(bankIFSCNo) : mask(bankIFSCNo, 4),
+        employeeName: e.employeeName ?? null,
+        nameAsPerAadhar: e.nameAsPerAadhar ?? null,
+        employeeId: e.employeeId ?? null,
+        designation: e.designation ?? null,
+        company: e.company ?? null,
+        department: e.department ?? null,
 
-        // SALARY fields: decrypt numbers when reveal=true, otherwise keep null
+        // status: keep string and boolean flag if present
+        status: e.status ?? null,
+        statusWorking:
+          typeof e.statusWorking === "boolean"
+            ? e.statusWorking
+            : e.status === "working"
+            ? true
+            : e.status === "not_working"
+            ? false
+            : null,
+
+        // dates (return raw ISO or null)
+        dateOfBirth: e.dateOfBirth || null,
+        dateOfJoining: e.dateOfJoining || null,
+        dateOfExit: e.dateOfExit || null,
+
+        // PII fields: masked unless reveal=true (and decryptField available)
+        aadhar:
+          reveal && typeof decryptField === "function"
+            ? tryDecryptString(aadharRaw)
+            : mask(aadharRaw, 4),
+        PAN:
+          reveal && typeof decryptField === "function"
+            ? tryDecryptString(PANraw)
+            : mask(PANraw, 3),
+
+        UAN:
+          reveal && typeof decryptField === "function"
+            ? tryDecryptString(UANraw)
+            : mask(UANraw, 4),
+
+        pfNo:
+          reveal && typeof decryptField === "function"
+            ? tryDecryptString(pfRaw)
+            : mask(pfRaw, 4),
+
+        esiNo:
+          reveal && typeof decryptField === "function"
+            ? tryDecryptString(esiRaw)
+            : mask(esiRaw, 4),
+
+        bankName: e.bankName ?? null,
+        bankAccountNo:
+          reveal && typeof decryptField === "function"
+            ? tryDecryptString(bankAccountRaw)
+            : mask(bankAccountRaw, 4),
+        bankIFSCNo:
+          reveal && typeof decryptField === "function"
+            ? tryDecryptString(bankIFSCRaw)
+            : mask(bankIFSCRaw, 3),
+        bankBranchName: e.bankBranchName ?? null,
+
+        // Salary fields: decrypted numeric when reveal=true, otherwise null
         basicSalary: reveal ? tryDecryptNumber(basicSalaryEnc) : null,
-        vda: reveal ? tryDecryptNumber(vdaEnc) : null,
         hra: reveal ? tryDecryptNumber(hraEnc) : null,
         trAllowance: reveal ? tryDecryptNumber(trAllowanceEnc) : null,
         specialAllowance: reveal ? tryDecryptNumber(specialAllowanceEnc) : null,
+        vda: reveal ? tryDecryptNumber(vdaEnc) : null,
 
-        email: e.email || null,
-        mobileNumber: e.mobileNumber || null,
+        // contact & addresses
+        email: e.email ?? null,
+        mobileNumber: e.mobileNumber ?? null,
+        altmobileNumber: e.altmobileNumber ?? null,
+        currentAddress: e.currentAddress ?? null,
+        permanentAddress: e.permanentAddress ?? null,
+        bloodGroup: e.bloodGroup ?? null,
+
+        // Marital / family fields
+        maritalStatus: e.maritalStatus ?? null,
+        isMarried:
+          typeof e.isMarried === "boolean"
+            ? e.isMarried
+            : e.maritalStatus
+            ? String(e.maritalStatus).toLowerCase() === "married"
+            : null,
+
+        fatherName: e.fatherName ?? null,
+        fatherDOB: e.fatherDOB || null,
+        fatherAadhar:
+          reveal && typeof decryptField === "function"
+            ? tryDecryptString(e.fatherAadhar)
+            : mask(e.fatherAadhar, 4),
+
+        motherName: e.motherName ?? null,
+        motherDOB: e.motherDOB || null,
+        motherAadhar:
+          reveal && typeof decryptField === "function"
+            ? tryDecryptString(e.motherAadhar)
+            : mask(e.motherAadhar, 4),
+
+        fatherOrSpouseName: e.fatherOrSpouseName ?? null,
+
+        spouseName: e.spouseName ?? null,
+        spouseDOB: e.spouseDOB || null,
+        spouseAadhar:
+          reveal && typeof decryptField === "function"
+            ? tryDecryptString(e.spouseAadhar)
+            : mask(e.spouseAadhar, 4),
+
+        childrenName: e.childrenName ?? null,
+        childrenAadharNumber:
+          reveal && typeof decryptField === "function"
+            ? tryDecryptString(e.childrenAadharNumber)
+            : mask(e.childrenAadharNumber, 4),
+
+        // emergency and nominee
+        emergencyContactName: e.emergencyContactName ?? null,
+        emergencyContactNumber: e.emergencyContactNumber ?? null,
+        emergencyContactRelation: e.emergencyContactRelation ?? null,
+
+        nomineeName: e.nomineeName ?? null,
+        nomineeRelationship: e.nomineeRelationship ?? null,
+
+        // metadata
         createdAt: e.createdAt,
         updatedAt: e.updatedAt,
       };
@@ -1307,12 +1670,361 @@ const viewDepartmentEmployeesUnderCompany = async (req, res) => {
   }
 };
 
+// const editDepartmentEmployeeUnderCompany = async (req, res) => {
+//   try {
+//     const { companyId, deptId, employeeId } = req.params;
+//     const body = req.body || {};
+
+//     //validate id's
+//     if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Valid companyId param required" });
+//     }
+//     if (!deptId || !mongoose.Types.ObjectId.isValid(deptId)) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Valid deptId param required" });
+//     }
+//     if (!employeeId || !mongoose.Types.ObjectId.isValid(employeeId)) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Valid employeeId param required" });
+//     }
+
+//     //ensure company exists
+//     const company = await AdminCompany.findById(companyId).lean();
+//     if (!company) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Company not found" });
+//     }
+
+//     // Ensure department exists and belongs to company
+//     const dept = await employeeDept.findById(deptId).lean();
+//     if (!dept) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Department not found" });
+//     }
+//     if (String(dept.company) !== String(companyId)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Department does not belong to the specified company",
+//       });
+//     }
+
+//     // Load employee and ensure it belongs to the company & department
+//     const employee = await Employee.findById(employeeId);
+//     if (!employee) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Employee not found" });
+//     }
+//     if (
+//       String(employee.company) !== String(companyId) ||
+//       String(employee.department) !== String(deptId)
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Employee does not belong to the specified company/department",
+//       });
+//     }
+
+//     // Helper to validate money-like inputs
+//     const isValidMoney = (val) => {
+//       if (val === undefined || val === null || val === "") return false;
+//       const n = Number(val);
+//       return Number.isFinite(n) && n >= 0;
+//     };
+
+//     // Prepare updates (only provided fields)
+//     const updates = {};
+
+//     // Plain-string fields (you previously stored these as plaintext)
+//     if (body.employeeName !== undefined) {
+//       if (!body.employeeName || !String(body.employeeName).trim()) {
+//         return res
+//           .status(400)
+//           .json({ success: false, message: "employeeName cannot be empty" });
+//       }
+//       updates.employeeName = String(body.employeeName).trim();
+//     }
+
+//     if (body.employeeId !== undefined) {
+//       const newEmpId = String(body.employeeId).trim();
+//       if (!newEmpId) {
+//         return res
+//           .status(400)
+//           .json({ success: false, message: "employeeId cannot be empty" });
+//       }
+
+//       // Check duplicate employeeId (exclude current employee)
+//       const dup = await Employee.findOne({
+//         employeeId: newEmpId,
+//         _id: { $ne: employeeId },
+//       }).lean();
+//       if (dup) {
+//         return res
+//           .status(409)
+//           .json({ success: false, message: "employeeId already exists" });
+//       }
+//       updates.employeeId = newEmpId;
+//     }
+
+//     if (body.designation !== undefined) {
+//       updates.designation = body.designation
+//         ? String(body.designation).trim()
+//         : undefined;
+//     }
+
+//     if (body.email !== undefined) {
+//       if (!body.email) {
+//         // clear if explicitly empty
+//         updates.email = undefined;
+//       } else {
+//         const emailRaw = String(body.email).trim().toLowerCase();
+//         const emailRe = /^\S+@\S+\.\S+$/;
+//         if (!emailRe.test(emailRaw)) {
+//           return res
+//             .status(400)
+//             .json({ success: false, message: "Invalid email format" });
+//         }
+//       }
+//     }
+
+//     if (body.mobileNumber !== undefined) {
+//       if (!body.mobileNumber) {
+//         updates.mobileNumber = undefined;
+//       } else {
+//         const mobileRaw = String(body.mobileNumber).trim();
+//         const mobileRe = /^[0-9]{10}$/;
+//         if (!mobileRe.test(mobileRaw)) {
+//           return res.status(400).json({
+//             success: false,
+//             message: "Invalid mobile number. Expect 10 digits.",
+//           });
+//         }
+
+//       }
+//     }
+
+//     // Allow updating dateOfJoining (accept ISO or DD-MM-YYYY)
+//     if (body.dateOfJoining !== undefined) {
+//       if (!body.dateOfJoining) {
+//         updates.dateOfJoining = undefined;
+//       } else {
+//         const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/;
+//         const m = String(body.dateOfJoining).trim().match(ddmmyyyy);
+//         if (m) {
+//           const [, dd, mm, yyyy] = m;
+//           updates.dateOfJoining = new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
+//         } else {
+//           const maybe = new Date(body.dateOfJoining);
+//           if (isNaN(maybe.getTime())) {
+//             return res
+//               .status(400)
+//               .json({ success: false, message: "Invalid dateOfJoining" });
+//           }
+//           updates.dateOfJoining = maybe;
+//         }
+//       }
+//     }
+
+//     // If moving employee to another department: validate department belongs to same company
+//     if (body.department !== undefined) {
+//       if (!mongoose.Types.ObjectId.isValid(body.department)) {
+//         return res
+//           .status(400)
+//           .json({ success: false, message: "Invalid department id" });
+//       }
+//       const newDept = await employeeDept.findById(body.department).lean();
+//       if (!newDept) {
+//         return res
+//           .status(404)
+//           .json({ success: false, message: "Target department not found" });
+//       }
+//       if (String(newDept.company) !== String(companyId)) {
+//         return res.status(400).json({
+//           success: false,
+//           message: "Target department does not belong to this company",
+//         });
+//       }
+//       updates.department = body.department;
+//     }
+
+//     const encryptIfPresent = (fieldName) => {
+//       if (body[fieldName] === undefined) return;
+//       if (body[fieldName] === null || body[fieldName] === "") {
+//         // explicitly clear sensitive field if empty string/null provided
+//         updates[fieldName] = undefined;
+//         return;
+//       }
+//       const raw = String(body[fieldName]).trim();
+//       updates[fieldName] = encryptField ? encryptField(raw) : raw;
+//     };
+
+//     encryptIfPresent("aadhar");
+//     encryptIfPresent("UAN");
+//     encryptIfPresent("pfNo");
+//     encryptIfPresent("esiNo");
+//     encryptIfPresent("bankAccountNo");
+//     encryptIfPresent("bankBranchName");
+//     encryptIfPresent("bankIFSCNo");
+
+//     if (body.bankName !== undefined) {
+//       updates.bankName = body.bankName
+//         ? String(body.bankName).trim()
+//         : undefined;
+//     }
+
+//     const handleSalaryField = (clientKey, encKey) => {
+//       if (body[clientKey] === undefined) return;
+//       // clear if explicitly empty / null provided
+//       if (body[clientKey] === null || body[clientKey] === "") {
+//         updates[encKey] = undefined;
+//         return;
+//       }
+//       // Validate numeric
+//       const rawStr = String(body[clientKey]).trim();
+//       if (!isValidMoney(rawStr)) {
+//         throw {
+//           status: 400,
+//           message: `${clientKey} must be a non-negative number or decimal`,
+//         };
+//       }
+//       updates[encKey] = encryptField ? encryptField(rawStr) : rawStr;
+//     };
+
+//     try {
+//       handleSalaryField("basicSalary", "basicSalaryEnc");
+//       handleSalaryField("hra", "hraEnc");
+//       handleSalaryField("trAllowance", "trAllowanceEnc");
+//       handleSalaryField("specialAllowance", "specialAllowanceEnc");
+//       handleSalaryField("vda", "vdaEnc");
+//     } catch (validationErr) {
+//       if (validationErr && validationErr.status) {
+//         return res.status(validationErr.status).json({
+//           success: false,
+//           message: validationErr.message,
+//         });
+//       }
+//       throw validationErr;
+//     }
+
+//     // remove undefined keys so mongoose doesn't set to undefined inadvertently
+//     Object.keys(updates).forEach(
+//       (k) => updates[k] === undefined && delete updates[k]
+//     );
+
+//     if (Object.keys(updates).length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "No valid fields provided to update",
+//       });
+//     }
+
+//     // Apply update
+//     const updated = await Employee.findByIdAndUpdate(employeeId, updates, {
+//       new: true,
+//       runValidators: true,
+//     }).lean();
+
+//     if (!updated) {
+//       // rare: removed meanwhile
+//       return res.status(404).json({
+//         success: false,
+//         message: "Employee not found after update attempt",
+//       });
+//     }
+
+//     const safeResp = { ...updated };
+//     const tryDecryptString = (val) => {
+//       if (!val || typeof val !== "string") return null;
+//       try {
+//         return decryptField ? decryptField(val) : val;
+//       } catch (err) {
+//         console.warn("decrypt failed, returning raw:", err?.message || err);
+//         return val;
+//       }
+//     };
+
+//     const tryDecryptNumber = (val) => {
+//       if (!val || typeof val !== "string") return null;
+//       try {
+//         const plain = decryptField ? decryptField(val) : val;
+//         if (plain === null || plain === undefined || plain === "") return null;
+//         const n = parseFloat(String(plain));
+//         return Number.isFinite(n) ? n : null;
+//       } catch (err) {
+//         console.warn("decrypt number failed:", err?.message || err);
+//         return null;
+//       }
+//     };
+
+//     safeResp.aadhar = safeResp.aadhar
+//       ? tryDecryptString(safeResp.aadhar)
+//       : null;
+//     safeResp.UAN = safeResp.UAN ? tryDecryptString(safeResp.UAN) : null;
+//     safeResp.pfNo = safeResp.pfNo ? tryDecryptString(safeResp.pfNo) : null;
+//     safeResp.esiNo = safeResp.esiNo ? tryDecryptString(safeResp.esiNo) : null;
+//     safeResp.bankAccountNo = safeResp.bankAccountNo
+//       ? tryDecryptString(safeResp.bankAccountNo)
+//       : null;
+//     safeResp.bankBranchName = safeResp.bankBranchName
+//       ? tryDecryptString(safeResp.bankBranchName)
+//       : null;
+//     safeResp.bankIFSCNo = safeResp.bankIFSCNo
+//       ? tryDecryptString(safeResp.bankIFSCNo)
+//       : null;
+
+//     // Salary — decrypt ciphertext fields into numeric fields for response
+//     safeResp.basicSalary = safeResp.basicSalaryEnc
+//       ? tryDecryptNumber(safeResp.basicSalaryEnc)
+//       : null;
+//     safeResp.hra = safeResp.hraEnc ? tryDecryptNumber(safeResp.hraEnc) : null;
+//     safeResp.trAllowance = safeResp.trAllowanceEnc
+//       ? tryDecryptNumber(safeResp.trAllowanceEnc)
+//       : null;
+//     safeResp.specialAllowance = safeResp.specialAllowanceEnc
+//       ? tryDecryptNumber(safeResp.specialAllowanceEnc)
+//       : null;
+//     safeResp.vda = safeResp.vdaEnc ? tryDecryptNumber(safeResp.vdaEnc) : null;
+
+//     // Optionally remove enc fields from response so ciphertext is not leaked out
+//     delete safeResp.basicSalaryEnc;
+//     delete safeResp.hraEnc;
+//     delete safeResp.trAllowanceEnc;
+//     delete safeResp.specialAllowanceEnc;
+//     delete safeResp.vdaEnc;
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Employee updated",
+//       data: safeResp,
+//     });
+//   } catch (err) {
+//     console.error("editDepartmentEmployeeUnderCompany error:", err);
+
+//     if (err && err.code === 11000) {
+//       return res
+//         .status(409)
+//         .json({ success: false, message: "Duplicate key error" });
+//     }
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Server error while updating employee",
+//     });
+//   }
+// };
+
 const editDepartmentEmployeeUnderCompany = async (req, res) => {
   try {
     const { companyId, deptId, employeeId } = req.params;
     const body = req.body || {};
 
-    //validate id's
+    // validate id's
     if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
       return res
         .status(400)
@@ -1329,7 +2041,7 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
         .json({ success: false, message: "Valid employeeId param required" });
     }
 
-    //ensure company exists
+    // ensure company exists
     const company = await AdminCompany.findById(companyId).lean();
     if (!company) {
       return res
@@ -1375,6 +2087,24 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
       return Number.isFinite(n) && n >= 0;
     };
 
+    // Helper to parse date (ISO or DD-MM-YYYY)
+    const parsePossibleDate = (input) => {
+      if (!input && input !== 0) return undefined;
+      const s = String(input).trim();
+      if (!s) return undefined;
+      const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/;
+      const m = s.match(ddmmyyyy);
+      if (m) {
+        const [, dd, mm, yyyy] = m;
+        const d = new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
+        if (isNaN(d.getTime())) return undefined;
+        return d;
+      }
+      const maybe = new Date(s);
+      if (isNaN(maybe.getTime())) return undefined;
+      return maybe;
+    };
+
     // Prepare updates (only provided fields)
     const updates = {};
 
@@ -1415,9 +2145,15 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
         : undefined;
     }
 
+    // nameAsPerAadhar (plain string)
+    if (body.nameAsPerAadhar !== undefined) {
+      updates.nameAsPerAadhar = body.nameAsPerAadhar
+        ? String(body.nameAsPerAadhar).trim()
+        : undefined;
+    }
+
     if (body.email !== undefined) {
-      if (!body.email) {
-        // clear if explicitly empty
+      if (body.email === "" || body.email === null) {
         updates.email = undefined;
       } else {
         const emailRaw = String(body.email).trim().toLowerCase();
@@ -1427,17 +2163,7 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
             .status(400)
             .json({ success: false, message: "Invalid email format" });
         }
-        // uniqueness check excluding current employee
-        // const dupEmail = await Employee.findOne({
-        //   email: emailRaw,
-        //   _id: { $ne: employeeId },
-        // }).lean();
-        // if (dupEmail) {
-        //   return res
-        //     .status(409)
-        //     .json({ success: false, message: "Email already in use" });
-        // }
-        // updates.email = emailRaw;
+        updates.email = emailRaw;
       }
     }
 
@@ -1453,39 +2179,120 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
             message: "Invalid mobile number. Expect 10 digits.",
           });
         }
-        // uniqueness check excluding current employee
-        // const dupMobile = await Employee.findOne({
-        //   mobileNumber: mobileRaw,
-        //   _id: { $ne: employeeId },
-        // }).lean();
-        // if (dupMobile) {
-        //   return res
-        //     .status(409)
-        //     .json({ success: false, message: "Mobile number already in use" });
-        // }
-        // updates.mobileNumber = mobileRaw;
+        updates.mobileNumber = mobileRaw;
       }
     }
 
-    // Allow updating dateOfJoining (accept ISO or DD-MM-YYYY)
+    // altmobileNumber validation (new)
+    if (body.altmobileNumber !== undefined) {
+      if (!body.altmobileNumber) {
+        updates.altmobileNumber = undefined;
+      } else {
+        const altRaw = String(body.altmobileNumber).trim();
+        const mobileRe = /^[0-9]{10}$/;
+        if (!mobileRe.test(altRaw)) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid alternative mobile number. Expect 10 digits.",
+          });
+        }
+        updates.altmobileNumber = altRaw;
+      }
+    }
+
+    // status: accept either boolean flag (statusWorking) or string
+    if (body.statusWorking !== undefined) {
+      updates.status = body.statusWorking ? "working" : "not_working";
+      updates.statusWorking = Boolean(body.statusWorking);
+    } else if (body.status !== undefined) {
+      // if provided as string, normalize
+      const s = body.status ? String(body.status).trim().toLowerCase() : "";
+      if (s === "working" || s === "not_working" || s === "not working") {
+        updates.status = s === "not working" ? "not_working" : s;
+        updates.statusWorking = s === "working";
+      } else if (s === "") {
+        updates.status = undefined;
+        updates.statusWorking = undefined;
+      } else {
+        // accept other strings but still set boolean if it looks like working
+        updates.status = String(body.status).trim();
+        updates.statusWorking =
+          s === "working" || s === "true" || s === "1" ? true : false;
+      }
+    }
+
+    // dates: dateOfJoining, dateOfBirth, dateOfExit, fatherDOB, motherDOB, spouseDOB
     if (body.dateOfJoining !== undefined) {
       if (!body.dateOfJoining) {
         updates.dateOfJoining = undefined;
       } else {
-        const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/;
-        const m = String(body.dateOfJoining).trim().match(ddmmyyyy);
-        if (m) {
-          const [, dd, mm, yyyy] = m;
-          updates.dateOfJoining = new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
-        } else {
-          const maybe = new Date(body.dateOfJoining);
-          if (isNaN(maybe.getTime())) {
-            return res
-              .status(400)
-              .json({ success: false, message: "Invalid dateOfJoining" });
-          }
-          updates.dateOfJoining = maybe;
+        const parsed = parsePossibleDate(body.dateOfJoining);
+        if (!parsed) {
+          return res
+            .status(400)
+            .json({ success: false, message: "Invalid dateOfJoining" });
         }
+        updates.dateOfJoining = parsed;
+      }
+    }
+
+    if (body.dateOfBirth !== undefined) {
+      if (!body.dateOfBirth) updates.dateOfBirth = undefined;
+      else {
+        const parsed = parsePossibleDate(body.dateOfBirth);
+        if (!parsed)
+          return res
+            .status(400)
+            .json({ success: false, message: "Invalid dateOfBirth" });
+        updates.dateOfBirth = parsed;
+      }
+    }
+
+    if (body.dateOfExit !== undefined) {
+      if (!body.dateOfExit) updates.dateOfExit = undefined;
+      else {
+        const parsed = parsePossibleDate(body.dateOfExit);
+        if (!parsed)
+          return res
+            .status(400)
+            .json({ success: false, message: "Invalid dateOfExit" });
+        updates.dateOfExit = parsed;
+      }
+    }
+
+    if (body.fatherDOB !== undefined) {
+      if (!body.fatherDOB) updates.fatherDOB = undefined;
+      else {
+        const parsed = parsePossibleDate(body.fatherDOB);
+        if (!parsed)
+          return res
+            .status(400)
+            .json({ success: false, message: "Invalid fatherDOB" });
+        updates.fatherDOB = parsed;
+      }
+    }
+
+    if (body.motherDOB !== undefined) {
+      if (!body.motherDOB) updates.motherDOB = undefined;
+      else {
+        const parsed = parsePossibleDate(body.motherDOB);
+        if (!parsed)
+          return res
+            .status(400)
+            .json({ success: false, message: "Invalid motherDOB" });
+        updates.motherDOB = parsed;
+      }
+    }
+
+    if (body.spouseDOB !== undefined) {
+      if (!body.spouseDOB) updates.spouseDOB = undefined;
+      else {
+        const parsed = parsePossibleDate(body.spouseDOB);
+        if (!parsed)
+          return res
+            .status(400)
+            .json({ success: false, message: "Invalid spouseDOB" });
+        updates.spouseDOB = parsed;
       }
     }
 
@@ -1511,39 +2318,88 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
       updates.department = body.department;
     }
 
-    const encryptIfPresent = (fieldName) => {
+    // Plain optional fields (string -> trimmed or undefined)
+    const optionalStrings = [
+      "currentAddress",
+      "permanentAddress",
+      "bloodGroup",
+      "maritalStatus",
+      "fatherName",
+      "fatherAadhar",
+      "motherName",
+      "motherAadhar",
+      "fatherOrSpouseName",
+      "spouseName",
+      "spouseAadhar",
+      "childrenName",
+      "childrenAadharNumber",
+      "emergencyContactName",
+      "emergencyContactNumber",
+      "emergencyContactRelation",
+      "nomineeName",
+      "nomineeRelationship",
+    ];
+    optionalStrings.forEach((k) => {
+      if (body[k] !== undefined) {
+        updates[k] = body[k] ? String(body[k]).trim() : undefined;
+      }
+    });
+
+    // marital boolean flag (isMarried) if provided
+    if (body.isMarried !== undefined) {
+      updates.isMarried = Boolean(body.isMarried);
+      updates.maritalStatus = Boolean(body.isMarried) ? "married" : "unmarried";
+    } else if (body.maritalStatus !== undefined) {
+      const m = body.maritalStatus ? String(body.maritalStatus).trim() : "";
+      if (m === "") {
+        updates.maritalStatus = undefined;
+        updates.isMarried = undefined;
+      } else {
+        updates.maritalStatus = m;
+        updates.isMarried = m.toLowerCase() === "married";
+      }
+    }
+
+    // helper to encrypt sensitive fields if present
+    const encryptIfPresent = (fieldName, targetKey = fieldName) => {
       if (body[fieldName] === undefined) return;
       if (body[fieldName] === null || body[fieldName] === "") {
-        // explicitly clear sensitive field if empty string/null provided
-        updates[fieldName] = undefined;
+        updates[targetKey] = undefined;
         return;
       }
       const raw = String(body[fieldName]).trim();
-      updates[fieldName] = encryptField ? encryptField(raw) : raw;
+      updates[targetKey] =
+        typeof encryptField === "function" ? encryptField(raw) : raw;
     };
 
-    encryptIfPresent("aadhar");
-    encryptIfPresent("UAN");
-    encryptIfPresent("pfNo");
-    encryptIfPresent("esiNo");
-    encryptIfPresent("bankAccountNo");
-    encryptIfPresent("bankBranchName");
-    encryptIfPresent("bankIFSCNo");
-
+    // sensitive string fields
+    encryptIfPresent("aadhar", "aadhar");
+    encryptIfPresent("PAN", "PAN");
+    encryptIfPresent("UAN", "UAN");
+    encryptIfPresent("pfNo", "pfNo");
+    encryptIfPresent("esiNo", "esiNo");
+    // bank fields: bankName unencrypted, account/ifsc encrypted
     if (body.bankName !== undefined) {
       updates.bankName = body.bankName
         ? String(body.bankName).trim()
         : undefined;
     }
+    encryptIfPresent("bankAccountNo", "bankAccountNo");
+    encryptIfPresent("bankIFSCNo", "bankIFSCNo");
+    // bankBranchName kept as plain text (your schema has it plain)
+    if (body.bankBranchName !== undefined) {
+      updates.bankBranchName = body.bankBranchName
+        ? String(body.bankBranchName).trim()
+        : undefined;
+    }
 
+    // salary fields - encrypted fields in DB
     const handleSalaryField = (clientKey, encKey) => {
       if (body[clientKey] === undefined) return;
-      // clear if explicitly empty / null provided
       if (body[clientKey] === null || body[clientKey] === "") {
         updates[encKey] = undefined;
         return;
       }
-      // Validate numeric
       const rawStr = String(body[clientKey]).trim();
       if (!isValidMoney(rawStr)) {
         throw {
@@ -1551,7 +2407,8 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
           message: `${clientKey} must be a non-negative number or decimal`,
         };
       }
-      updates[encKey] = encryptField ? encryptField(rawStr) : rawStr;
+      updates[encKey] =
+        typeof encryptField === "function" ? encryptField(rawStr) : rawStr;
     };
 
     try {
@@ -1596,11 +2453,12 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
       });
     }
 
+    // Build safe response and decrypt ciphertext fields for client
     const safeResp = { ...updated };
     const tryDecryptString = (val) => {
       if (!val || typeof val !== "string") return null;
       try {
-        return decryptField ? decryptField(val) : val;
+        return typeof decryptField === "function" ? decryptField(val) : val;
       } catch (err) {
         console.warn("decrypt failed, returning raw:", err?.message || err);
         return val;
@@ -1610,7 +2468,8 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
     const tryDecryptNumber = (val) => {
       if (!val || typeof val !== "string") return null;
       try {
-        const plain = decryptField ? decryptField(val) : val;
+        const plain =
+          typeof decryptField === "function" ? decryptField(val) : val;
         if (plain === null || plain === undefined || plain === "") return null;
         const n = parseFloat(String(plain));
         return Number.isFinite(n) ? n : null;
@@ -1620,17 +2479,16 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
       }
     };
 
+    // decrypt sensitive strings where appropriate
     safeResp.aadhar = safeResp.aadhar
       ? tryDecryptString(safeResp.aadhar)
       : null;
+    safeResp.PAN = safeResp.PAN ? tryDecryptString(safeResp.PAN) : null;
     safeResp.UAN = safeResp.UAN ? tryDecryptString(safeResp.UAN) : null;
     safeResp.pfNo = safeResp.pfNo ? tryDecryptString(safeResp.pfNo) : null;
     safeResp.esiNo = safeResp.esiNo ? tryDecryptString(safeResp.esiNo) : null;
     safeResp.bankAccountNo = safeResp.bankAccountNo
       ? tryDecryptString(safeResp.bankAccountNo)
-      : null;
-    safeResp.bankBranchName = safeResp.bankBranchName
-      ? tryDecryptString(safeResp.bankBranchName)
       : null;
     safeResp.bankIFSCNo = safeResp.bankIFSCNo
       ? tryDecryptString(safeResp.bankIFSCNo)
@@ -1649,7 +2507,7 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
       : null;
     safeResp.vda = safeResp.vdaEnc ? tryDecryptNumber(safeResp.vdaEnc) : null;
 
-    // Optionally remove enc fields from response so ciphertext is not leaked out
+    // Remove enc fields from response so ciphertext is not exposed
     delete safeResp.basicSalaryEnc;
     delete safeResp.hraEnc;
     delete safeResp.trAllowanceEnc;
@@ -1668,6 +2526,13 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
       return res
         .status(409)
         .json({ success: false, message: "Duplicate key error" });
+    }
+
+    // If we threw a validationErr with status earlier
+    if (err && err.status && err.message) {
+      return res
+        .status(err.status)
+        .json({ success: false, message: err.message });
     }
 
     return res.status(500).json({
@@ -2432,12 +3297,10 @@ const fetchStoredEmployeeSalaryDetails = async (req, res) => {
     });
   } catch (err) {
     console.error("fetchStoredEmployeeSalaryDetails error:", err);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Server error while fetching stored salary details",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching stored salary details",
+    });
   }
 };
 

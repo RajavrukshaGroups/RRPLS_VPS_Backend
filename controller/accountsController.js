@@ -170,6 +170,11 @@ const sendAllEmployeesSalarySlipsToAccountsTeam = async (req, res) => {
         "specialAllowance_enc"
       );
       const vda = readNumericFromSalary(s, "vda", "vda_enc");
+      const foodAllowance = readNumericFromSalary(
+        s,
+        "foodAllowance",
+        "foodAllowance_enc"
+      );
       const epf = readNumericFromSalary(s, "epf", "epf_enc");
       const esic = readNumericFromSalary(s, "esic", "esic_enc");
       const professionalTax = readNumericFromSalary(
@@ -182,7 +187,12 @@ const sendAllEmployeesSalarySlipsToAccountsTeam = async (req, res) => {
 
       const computedGross =
         safeNum(s.totalEarnings) ||
-        basicSalary + hra + trAllowance + specialAllowance + vda;
+        basicSalary +
+          hra +
+          trAllowance +
+          specialAllowance +
+          foodAllowance +
+          vda;
 
       const computedDeductions =
         safeNum(s.totalDeductions) ||

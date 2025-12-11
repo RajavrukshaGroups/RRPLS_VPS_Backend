@@ -427,7 +427,7 @@
               <%= (fmt?.lop && fmt.lop !== "0.00") ? fmt.lop : "-" %>
             </td>
           </tr>
-          <tr>
+          <!-- <tr>
             <td>Food Allowances</td>
             <td class="amount">
               <%= (fmt?.foodAllowance && fmt.foodAllowance !== "0.00") ?
@@ -435,7 +435,15 @@
             </td>
             <td></td>
             <td class="amount"></td>
+          </tr> -->
+          <% if (fmt?.foodAllowance && parseFloat(fmt.foodAllowance) > 0) { %>
+          <tr>
+            <td>Food Allowances</td>
+            <td class="amount"><%= fmt.foodAllowance %></td>
+            <td></td>
+            <td class="amount"></td>
           </tr>
+          <% } %>
 
           <!-- Totals inside table -->
           <tr>

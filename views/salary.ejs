@@ -445,6 +445,15 @@
           </tr>
           <% } %>
 
+           <% if (fmt?.uniformRefund && parseFloat(fmt.uniformRefund) > 0) { %>
+          <tr>
+            <td>Uniform Refund</td>
+            <td class="amount"><%= fmt.uniformRefund %></td>
+            <td></td>
+            <td class="amount"></td>
+          </tr>
+          <% } %>
+
           <!-- Totals inside table -->
           <tr>
             <td class="bold">Total Earnings</td>

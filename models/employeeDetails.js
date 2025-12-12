@@ -78,6 +78,7 @@ const employeeDetailsSchema = new mongoose.Schema(
     specialAllowanceEnc: { type: String, default: null },
     vdaEnc: { type: String, default: null },
     foodAllowanceEnc: { type: String, default: null },
+    uniformRefundEnc: { type: String, default: null },
   },
   {
     timestamps: true,
@@ -143,6 +144,15 @@ employeeDetailsSchema.virtual("vda").get(function () {
   if (!this.vdaEnc) return null;
   try {
     return safeParseFloat(decryptField(this.vdaEnc));
+  } catch (e) {
+    return null;
+  }
+});
+
+employeeDetailsSchema.virtual("uniformRefund").get(function () {
+  if (!this.uniformRefundEnc) return null;
+  try {
+    return safeParseFloat(decryptField(this.uniformRefundEnc));
   } catch (e) {
     return null;
   }

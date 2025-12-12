@@ -1198,6 +1198,9 @@ const createEmployeeRecord = async (req, res) => {
       foodAllowanceEnc: body.foodAllowance
         ? encryptField(String(body.foodAllowance).trim())
         : undefined,
+      uniformRefundEnc: body.uniformRefund
+        ? encryptField(String(body.uniformRefund).trim())
+        : undefined,
     };
 
     // strip undefined fields
@@ -1529,6 +1532,7 @@ const viewDepartmentEmployeesUnderCompany = async (req, res) => {
         e.specialAllowanceEnc ?? e.specialAllowance ?? null;
       const vdaEnc = e.vdaEnc ?? e.vda ?? null;
       const foodAllowanceEnc = e.foodAllowanceEnc ?? e.foodAllowance ?? null;
+      const uniformRefundEnc = e.uniformRefundEnc ?? e.uniformRefund ?? null;
 
       return {
         _id: e._id,
@@ -1597,6 +1601,7 @@ const viewDepartmentEmployeesUnderCompany = async (req, res) => {
         trAllowance: reveal ? tryDecryptNumber(trAllowanceEnc) : null,
         specialAllowance: reveal ? tryDecryptNumber(specialAllowanceEnc) : null,
         foodAllowance: reveal ? tryDecryptNumber(foodAllowanceEnc) : null,
+        uniformRefund: reveal ? tryDecryptNumber(uniformRefundEnc) : null,
         vda: reveal ? tryDecryptNumber(vdaEnc) : null,
 
         // contact & addresses
@@ -2421,8 +2426,9 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
       handleSalaryField("hra", "hraEnc");
       handleSalaryField("trAllowance", "trAllowanceEnc");
       handleSalaryField("specialAllowance", "specialAllowanceEnc");
-      handleSalaryField("foodAllowance", "foodAllowanceEnc"),
-        handleSalaryField("vda", "vdaEnc");
+      handleSalaryField("foodAllowance", "foodAllowanceEnc");
+      handleSalaryField("vda", "vdaEnc");
+      handleSalaryField("uniformRefund", "uniformRefundEnc");
     } catch (validationErr) {
       if (validationErr && validationErr.status) {
         return res.status(validationErr.status).json({
@@ -2515,6 +2521,9 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
     safeResp.foodAllowance = safeResp.foodAllowanceEnc
       ? tryDecryptNumber(safeResp.foodAllowanceEnc)
       : null;
+    safeResp.uniformRefund = safeResp.uniformRefundEnc
+      ? tryDecryptNumber(safeResp.uniformRefundEnc)
+      : null;
 
     // Remove enc fields from response so ciphertext is not exposed
     delete safeResp.basicSalaryEnc;
@@ -2523,6 +2532,7 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
     delete safeResp.specialAllowanceEnc;
     delete safeResp.vdaEnc;
     delete safeResp.foodAllowanceEnc;
+    delete safeResp.uniformRefundEnc;
 
     return res.status(200).json({
       success: true,
@@ -2771,6 +2781,7 @@ const createSalaryDetails = async (req, res) => {
       specialAllowance = 0,
       vda = 0,
       foodAllowance = 0,
+      uniformRefund=0,
       epf = 0,
       esic = 0,
       professionalTax = 0,
@@ -2848,7 +2859,8 @@ const createSalaryDetails = async (req, res) => {
       Number(trAllowance || 0) +
       Number(specialAllowance || 0) +
       Number(vda || 0) +
-      Number(foodAllowance || 0);
+      Number(foodAllowance || 0) +
+      Number(uniformRefund || 0);
 
     const totalEarnings = Math.round((gross + Number.EPSILON) * 100) / 100;
 
@@ -2901,6 +2913,7 @@ const createSalaryDetails = async (req, res) => {
       specialAllowance: 0,
       vda: 0,
       foodAllowance: 0,
+      uniformRefund:0,
 
       epf: 0,
       esic: 0,
@@ -2941,6 +2954,7 @@ const createSalaryDetails = async (req, res) => {
     salaryData.foodAllowance_enc = encryptField(
       String(Number(foodAllowance || 0))
     );
+    salaryData.uniformRefund_enc=encryptField(String(Number(uniformRefund || 0)));
 
     salaryData.epf_enc = encryptField(String(Number(epf || 0)));
     salaryData.esic_enc = encryptField(String(Number(esic || 0)));
@@ -3081,6 +3095,7 @@ const getIndEmployeeSalaryDetails = async (req, res) => {
         out.specialAllowance = toNumber(doc.specialAllowance_enc);
         out.vda = toNumber(doc.vda_enc);
         out.foodAllowance = toNumber(doc.foodAllowance_enc);
+        out.uniformRefund=toNumber(doc.uniformRefund_enc);
 
         out.epf = toNumber(doc.epf_enc);
         out.esic = toNumber(doc.esic_enc);
@@ -3130,6 +3145,7 @@ const getIndEmployeeSalaryDetails = async (req, res) => {
         out.specialAllowance = Number(doc.specialAllowance || 0);
         out.vda = Number(doc.vda || 0);
         out.foodAllowance = Number(doc.foodAllowance || 0);
+        out.uniformRefund=Number(doc.uniformRefund || 0);
 
         out.epf = Number(doc.epf || 0);
         out.esic = Number(doc.esic || 0);
@@ -3170,6 +3186,7 @@ const getIndEmployeeSalaryDetails = async (req, res) => {
         "specialAllowance_enc",
         "vda_enc",
         "foodAllowance_enc",
+        "uniformRefund_enc",
         "epf_enc",
         "esic_enc",
         "professionalTax_enc",
@@ -3297,6 +3314,11 @@ const fetchStoredEmployeeSalaryDetails = async (req, res) => {
       (typeof employee.foodAllowance === "number"
         ? employee.foodAllowance
         : null);
+    const uniformRefund =
+      tryDecryptNumber(employee.uniformRefundEnc) ??
+      (typeof employee.uniformRefund === "number"
+        ? employee.uniformRefund
+        : null);
 
     return res.status(200).json({
       success: true,
@@ -3317,6 +3339,7 @@ const fetchStoredEmployeeSalaryDetails = async (req, res) => {
           trAllowance: trAllowance,
           specialAllowance: specialAllowance,
           foodAllowance: foodAllowance,
+          uniformRefund:uniformRefund,
         },
       },
     });
@@ -3503,6 +3526,7 @@ const editIndEmployeeSalaryDetails = async (req, res) => {
       "specialAllowance",
       "vda",
       "foodAllowance",
+      "uniformRefund",
       "epf",
       "esic",
       "professionalTax",
@@ -3533,6 +3557,7 @@ const editIndEmployeeSalaryDetails = async (req, res) => {
       "trAllowance",
       "specialAllowance",
       "foodAllowance",
+      "uniformRefund",
       "vda",
       "epf",
       "esic",
@@ -3649,6 +3674,11 @@ const editIndEmployeeSalaryDetails = async (req, res) => {
       "foodAllowance_enc",
       "foodAllowance"
     );
+    const uniformRefundVal = readEncryptedNum(
+      salaryDoc,
+      "uniformRefund_enc",
+      "uniformRefund"
+    );
 
     const gross =
       Number(basicSalaryVal || 0) +
@@ -3656,6 +3686,7 @@ const editIndEmployeeSalaryDetails = async (req, res) => {
       Number(trAllowanceVal || 0) +
       Number(specialAllowanceVal || 0) +
       Number(foodAllowanceVal || 0) +
+      Number(uniformRefundVal || 0) +
       Number(vdaVal || 0);
     const totalEarnings = Math.round((gross + Number.EPSILON) * 100) / 100;
 
@@ -3756,6 +3787,10 @@ const editIndEmployeeSalaryDetails = async (req, res) => {
         upd.foodAllowance_enc = encryptField(
           String(Number(incoming.foodAllowance || 0))
         );
+       if (Object.prototype.hasOwnProperty.call(incoming, "uniformRefund"))
+        upd.uniformRefund_enc = encryptField(
+          String(Number(incoming.uniformRefund || 0))
+        );
 
       if (Object.prototype.hasOwnProperty.call(incoming, "epf"))
         upd.epf_enc = encryptField(String(Number(incoming.epf || 0)));
@@ -3804,6 +3839,7 @@ const editIndEmployeeSalaryDetails = async (req, res) => {
       upd.trAllowance = 0;
       upd.specialAllowance = 0;
       upd.foodAllowance = 0;
+      upd.uniformRefund= 0;
       upd.vda = 0;
       upd.epf = 0;
       upd.esic = 0;
@@ -3851,6 +3887,8 @@ const editIndEmployeeSalaryDetails = async (req, res) => {
       if (incoming.vda !== undefined) upd.vda = Number(incoming.vda || 0);
       if (incoming.foodAllowance !== undefined)
         upd.foodAllowance = Number(incoming.foodAllowance || 0);
+      if (incoming.uniformRefund !== undefined)
+        upd.uniformRefund = Number(incoming.uniformRefund || 0);
 
       if (incoming.epf !== undefined) upd.epf = Number(incoming.epf || 0);
       if (incoming.esic !== undefined) upd.esic = Number(incoming.esic || 0);
@@ -4068,6 +4106,10 @@ const readSalarySlipTemplateById = async (req, res) => {
           "foodAllowance",
           "foodAllowance_enc"
         ),
+        uniformRefund: readNumericFromSalary(
+          "uniformRefund",
+          "uniformRefund_enc"
+        ),
         // deductions
         epf: readNumericFromSalary("epf", "epf_enc"),
         esic: readNumericFromSalary("esic", "esic_enc"),
@@ -4131,6 +4173,7 @@ const readSalarySlipTemplateById = async (req, res) => {
         mapped.salary.trAllowance +
         mapped.salary.specialAllowance +
         mapped.salary.foodAllowance +
+        mapped.salary.uniformRefund +
         mapped.salary.vda;
 
     const computedDeductions =
@@ -4168,6 +4211,7 @@ const readSalarySlipTemplateById = async (req, res) => {
         trAllowance: formatINR(mapped.salary.trAllowance),
         specialAllowance: formatINR(mapped.salary.specialAllowance),
         foodAllowance: formatINR(mapped.salary.foodAllowance),
+        uniformRefund: formatINR(mapped.salary.uniformRefund),    
         vda: formatINR(mapped.salary.vda),
         epf: formatINR(mapped.salary.epf),
         esic: formatINR(mapped.salary.esic),
@@ -4335,6 +4379,10 @@ const sendSalarySlipByEmail = async (req, res) => {
           "foodAllowance",
           "foodAllowance_enc"
         ),
+        uniformRefund: readNumericFromSalary(
+          "uniformRefund",
+          "uniformRefund_enc"
+        ),
         vda: readNumericFromSalary("vda", "vda_enc"),
         epf: readNumericFromSalary("epf", "epf_enc"),
         esic: readNumericFromSalary("esic", "esic_enc"),
@@ -4387,6 +4435,7 @@ const sendSalarySlipByEmail = async (req, res) => {
         mapped.salary.trAllowance +
         mapped.salary.specialAllowance +
         mapped.salary.foodAllowance +
+        mapped.salary.uniformRefund +
         mapped.salary.vda;
 
     const computedDeductions =
@@ -4407,6 +4456,7 @@ const sendSalarySlipByEmail = async (req, res) => {
       trAllowance: formatINR(mapped.salary.trAllowance),
       specialAllowance: formatINR(mapped.salary.specialAllowance),
       foodAllowance: formatINR(mapped.salary.foodAllowance),
+      uniformRefund: formatINR(mapped.salary.uniformRefund),
       vda: formatINR(mapped.salary.vda),
       epf: formatINR(mapped.salary.epf),
       esic: formatINR(mapped.salary.esic),

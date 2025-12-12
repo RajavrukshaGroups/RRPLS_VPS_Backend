@@ -30,6 +30,7 @@ const SalarySchema = new mongoose.Schema(
     trAllowance: { type: Number, default: 0 },
     specialAllowance: { type: Number, default: 0 },
     foodAllowance: { type: Number, default: 0 },
+    uniformRefund:{type:Number,default:0},
     vda: { type: Number, default: 0 },
 
     // Deductions (numeric)
@@ -64,6 +65,7 @@ const SalarySchema = new mongoose.Schema(
     trAllowance_enc: { type: String },
     specialAllowance_enc: { type: String },
     foodAllowance_enc: { type: String },
+    uniformRefund_enc:{type:String},
     vda_enc: { type: String },
 
     epf_enc: { type: String },
@@ -105,6 +107,7 @@ SalarySchema.pre("validate", function (next) {
     Number(this.trAllowance || 0) +
     Number(this.specialAllowance || 0) +
     Number(this.foodAllowance || 0) +
+    Number(this.uniformRefund || 0) +
     Number(this.vda || 0);
 
   this.totalEarnings = Math.round((gross + Number.EPSILON) * 100) / 100;

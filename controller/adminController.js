@@ -5,6 +5,8 @@ const AdminOtp = require("../models/adminOtp");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const path = require("path");
+const bcrypt = require("bcrypt");
+const { generatePassword } = require("../utils/password");
 
 const AdminCompany = require("../models/adminCompany");
 const { title } = require("process");
@@ -1004,6 +1006,9 @@ const createEmployeeRecord = async (req, res) => {
       });
     }
 
+    // const plainPassword = generatePassword(10);
+    // const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
     // if (!/^[0-9]{10}$/.test(altmobileNumber)) {
     //   return res.status(400).json({
     //     success: false,
@@ -1127,6 +1132,7 @@ const createEmployeeRecord = async (req, res) => {
       employeeName: employeeName.trim(),
       nameAsPerAadhar: body.nameAsPerAadhar.trim(),
       employeeId: employeeId.trim(),
+      // password:hashedPassword,
       designation: body.designation
         ? String(body.designation).trim()
         : undefined,
@@ -1243,180 +1249,6 @@ const createEmployeeRecord = async (req, res) => {
     });
   }
 };
-
-// const viewDepartmentEmployeesUnderCompany = async (req, res) => {
-//   try {
-//     const { companyId, deptId } = req.params;
-//     const page = Math.max(1, parseInt(req.query.page || "1", 10));
-//     const limit = Math.min(
-//       200,
-//       Math.max(1, parseInt(req.query.limit || "15", 10))
-//     );
-//     const reveal = String(req.query.reveal || "false").toLowerCase() === "true";
-
-//     // Validate IDs
-//     if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: "Valid companyId param is required" });
-//     }
-//     if (!deptId || !mongoose.Types.ObjectId.isValid(deptId)) {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: "Valid deptId param is required" });
-//     }
-
-//     //ensure company exists
-//     const company = await AdminCompany.findById(companyId).lean();
-//     if (!company)
-//       return res
-//         .status(404)
-//         .json({ success: false, message: "Company not found" });
-
-//     // Ensure department exists and belongs to the company
-//     const dept = await employeeDept.findById(deptId).lean();
-//     if (!dept)
-//       return res
-//         .status(404)
-//         .json({ success: false, message: "Department not found" });
-//     if (String(dept.company) !== String(companyId)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Department does not belong to the specified company",
-//       });
-//     }
-
-//     const skip = (page - 1) * limit;
-//     const [employees, total] = await Promise.all([
-//       Employee.find({ company: companyId, department: deptId })
-//         .sort({ createdAt: -1 })
-//         .skip(skip)
-//         .limit(limit)
-//         .lean(),
-//       Employee.countDocuments({ company: companyId, department: deptId }),
-//     ]);
-
-//     if (!total || total === 0) {
-//       return res.status(200).json({
-//         success: true,
-//         message:
-//           "No employees found for this department under the given company",
-//         company: { _id: company._id, companyName: company.companyName },
-//         department: { _id: dept._id, department: dept.department },
-//         employees: [],
-//         pagination: { total: 0, page, limit, pages: 0 },
-//       });
-//     }
-
-//     // Map employees: attempt to decrypt sensitive fields if decryptField is available.
-//     // By default we mask some PII. If reveal=true and decryptField exists, we'll return decrypted values.
-//     const mapped = employees.map((e) => {
-//       const tryDecryptString = (val) => {
-//         if (!val || typeof val !== "string") return val;
-//         if (!decryptField) return val;
-//         try {
-//           return decryptField(val);
-//         } catch (err) {
-//           console.warn("decrypt failed, returning raw:", err?.message || err);
-//           return val;
-//         }
-//       };
-
-//       const tryDecryptNumber = (val) => {
-//         // val is expected to be an encrypted string (e.g. basicSalaryEnc). Return a Number or null.
-//         if (!val || typeof val !== "string") return null;
-//         if (!decryptField) return null;
-//         try {
-//           const plain = decryptField(val);
-//           if (plain === null || plain === undefined || plain === "")
-//             return null;
-//           const n = parseFloat(String(plain));
-//           return Number.isFinite(n) ? n : null;
-//         } catch (err) {
-//           console.warn("decrypt number failed:", err?.message || err);
-//           return null;
-//         }
-//       };
-
-//       const mask = (val, keepLast = 4) => {
-//         if (!val || typeof val !== "string") return val;
-//         if (val.length <= keepLast) return "*".repeat(val.length);
-//         const last = val.slice(-keepLast);
-//         return "*".repeat(Math.max(0, val.length - keepLast)) + last;
-//       };
-
-//       // If reveal requested, attempt decrypt then return; otherwise return masked stored data.
-//       const aadharRaw = e.aadhar;
-//       const UANRaw = e.UAN;
-//       const bankRaw = e.bankAccountNo;
-//       const bankBranchNameRaw = e.bankBranchName;
-//       const bankIFSCNo = e.bankIFSCNo;
-//       const pfRaw = e.pfNo;
-//       const esiRaw = e.esiNo;
-
-//       // salary ciphertext fields (note names in DB)
-//       const basicSalaryEnc = e.basicSalaryEnc ?? e.basicSalary; // fallback if your DB still has old field names
-//       const hraEnc = e.hraEnc ?? e.hra;
-//       const trAllowanceEnc = e.trAllowanceEnc ?? e.trAllowance;
-//       const specialAllowanceEnc = e.specialAllowanceEnc ?? e.specialAllowance;
-//       const vdaEnc = e.vdaEnc ?? e.vda;
-
-//       return {
-//         _id: e._id,
-//         employeeName:
-//           reveal && decryptField && typeof e.employeeName === "string"
-//             ? tryDecryptString(e.employeeName)
-//             : e.employeeName,
-//         employeeId:
-//           reveal && decryptField && typeof e.employeeId === "string"
-//             ? tryDecryptString(e.employeeId)
-//             : e.employeeId,
-//         designation:
-//           reveal && decryptField && typeof e.designation === "string"
-//             ? tryDecryptString(e.designation)
-//             : e.designation,
-//         dateOfJoining: e.dateOfJoining || null,
-//         // PII fields: return masked values unless reveal=true
-//         aadhar: reveal ? tryDecryptString(aadharRaw) : mask(aadharRaw, 4),
-//         UAN: reveal ? tryDecryptString(UANRaw) : mask(UANRaw, 4),
-//         pfNo: reveal ? tryDecryptString(pfRaw) : mask(pfRaw, 4),
-//         esiNo: reveal ? tryDecryptString(esiRaw) : mask(esiRaw, 4),
-//         bankName: e.bankName || null,
-//         bankAccountNo: reveal ? tryDecryptString(bankRaw) : mask(bankRaw, 4),
-//         bankBranchName: reveal
-//           ? tryDecryptString(bankBranchNameRaw)
-//           : mask(bankBranchNameRaw, 4),
-//         bankIFSCNo: reveal ? tryDecryptString(bankIFSCNo) : mask(bankIFSCNo, 4),
-
-//         // SALARY fields: decrypt numbers when reveal=true, otherwise keep null
-//         basicSalary: reveal ? tryDecryptNumber(basicSalaryEnc) : null,
-//         vda: reveal ? tryDecryptNumber(vdaEnc) : null,
-//         hra: reveal ? tryDecryptNumber(hraEnc) : null,
-//         trAllowance: reveal ? tryDecryptNumber(trAllowanceEnc) : null,
-//         specialAllowance: reveal ? tryDecryptNumber(specialAllowanceEnc) : null,
-
-//         email: e.email || null,
-//         mobileNumber: e.mobileNumber || null,
-//         createdAt: e.createdAt,
-//         updatedAt: e.updatedAt,
-//       };
-//     });
-
-//     return res.status(200).json({
-//       success: true,
-//       company: { _id: company._id, companyName: company.companyName },
-//       department: { _id: dept._id, department: dept.department },
-//       pagination: { total, page, limit, pages: Math.ceil(total / limit) },
-//       employees: mapped,
-//     });
-//   } catch (err) {
-//     console.error("viewDepartmentEmployeesUnderCompany error:", err);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error while fetching employees",
-//     });
-//   }
-// };
 
 const viewDepartmentEmployeesUnderCompany = async (req, res) => {
   try {
@@ -1679,6 +1511,129 @@ const viewDepartmentEmployeesUnderCompany = async (req, res) => {
     });
   }
 };
+
+const shareEmployeeLoginCredentials = async (req, res) => {
+  try {
+    const { companyId, deptId, employeeId } = req.params;
+
+    // 1️⃣ Validate IDs
+    if (
+      !mongoose.Types.ObjectId.isValid(companyId) ||
+      !mongoose.Types.ObjectId.isValid(deptId) ||
+      !mongoose.Types.ObjectId.isValid(employeeId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid companyId, deptId and employeeId are required",
+      });
+    }
+
+    // 2️⃣ Check company
+    const company = await AdminCompany.findById(companyId).lean();
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found",
+      });
+    }
+
+    // 3️⃣ Check department
+    const dept = await employeeDept.findById(deptId).lean();
+    if (!dept || String(dept.company) !== String(companyId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Department does not belong to this company",
+      });
+    }
+
+    // 4️⃣ Fetch employee & validate ownership
+    const employee = await Employee.findOne({
+      _id: employeeId,
+      company: companyId,
+      department: deptId,
+    }).lean();
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found under this company/department",
+      });
+    }
+
+    if (!employee.email) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee email not found",
+      });
+    }
+
+    // 5️⃣ Generate & hash password
+    const plainPassword = generatePassword(10);
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+    // 6️⃣ Update employee credentials
+    await Employee.findByIdAndUpdate(employeeId, {
+      password: hashedPassword,
+      credentialsSent: true,
+      credentialsSentAt: new Date(),
+    });
+
+    // 7️⃣ SMTP transporter
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    // 8️⃣ Email content
+    const mailOptions = {
+      // from: process.env.FROM_EMAIL,
+      from:process.env.ADMIN_EMAIL,
+      to: employee.email,
+      subject: "Your Employee Login Credentials",
+      html: `
+        <div style="font-family: Arial, sans-serif;">
+          <h2>Welcome ${employee.employeeName}</h2>
+          <p>Your employee login credentials are below:</p>
+
+          <table cellpadding="8" cellspacing="0" border="1">
+            <tr>
+              <td><b>Employee ID</b></td>
+              <td>${employee.employeeId}</td>
+            </tr>
+            <tr>
+              <td><b>Email</b></td>
+              <td>${employee.email}</td>
+            </tr>
+            <tr>
+              <td><b>Password</b></td>
+              <td>${plainPassword}</td>
+            </tr>
+          </table>
+          <p>Regards,<br/>Admin Team</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return res.status(200).json({
+      success: true,
+      message: "Login credentials sent successfully to employee email",
+    });
+  } catch (err) {
+    console.error("shareEmployeeLoginCredentials error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send employee login credentials",
+    });
+  }
+};
+
 
 // const editDepartmentEmployeeUnderCompany = async (req, res) => {
 //   try {
@@ -2781,7 +2736,7 @@ const createSalaryDetails = async (req, res) => {
       specialAllowance = 0,
       vda = 0,
       foodAllowance = 0,
-      uniformRefund=0,
+      uniformRefund = 0,
       epf = 0,
       esic = 0,
       professionalTax = 0,
@@ -2913,7 +2868,7 @@ const createSalaryDetails = async (req, res) => {
       specialAllowance: 0,
       vda: 0,
       foodAllowance: 0,
-      uniformRefund:0,
+      uniformRefund: 0,
 
       epf: 0,
       esic: 0,
@@ -2954,7 +2909,9 @@ const createSalaryDetails = async (req, res) => {
     salaryData.foodAllowance_enc = encryptField(
       String(Number(foodAllowance || 0))
     );
-    salaryData.uniformRefund_enc=encryptField(String(Number(uniformRefund || 0)));
+    salaryData.uniformRefund_enc = encryptField(
+      String(Number(uniformRefund || 0))
+    );
 
     salaryData.epf_enc = encryptField(String(Number(epf || 0)));
     salaryData.esic_enc = encryptField(String(Number(esic || 0)));
@@ -3095,7 +3052,7 @@ const getIndEmployeeSalaryDetails = async (req, res) => {
         out.specialAllowance = toNumber(doc.specialAllowance_enc);
         out.vda = toNumber(doc.vda_enc);
         out.foodAllowance = toNumber(doc.foodAllowance_enc);
-        out.uniformRefund=toNumber(doc.uniformRefund_enc);
+        out.uniformRefund = toNumber(doc.uniformRefund_enc);
 
         out.epf = toNumber(doc.epf_enc);
         out.esic = toNumber(doc.esic_enc);
@@ -3145,7 +3102,7 @@ const getIndEmployeeSalaryDetails = async (req, res) => {
         out.specialAllowance = Number(doc.specialAllowance || 0);
         out.vda = Number(doc.vda || 0);
         out.foodAllowance = Number(doc.foodAllowance || 0);
-        out.uniformRefund=Number(doc.uniformRefund || 0);
+        out.uniformRefund = Number(doc.uniformRefund || 0);
 
         out.epf = Number(doc.epf || 0);
         out.esic = Number(doc.esic || 0);
@@ -3339,7 +3296,7 @@ const fetchStoredEmployeeSalaryDetails = async (req, res) => {
           trAllowance: trAllowance,
           specialAllowance: specialAllowance,
           foodAllowance: foodAllowance,
-          uniformRefund:uniformRefund,
+          uniformRefund: uniformRefund,
         },
       },
     });
@@ -3787,7 +3744,7 @@ const editIndEmployeeSalaryDetails = async (req, res) => {
         upd.foodAllowance_enc = encryptField(
           String(Number(incoming.foodAllowance || 0))
         );
-       if (Object.prototype.hasOwnProperty.call(incoming, "uniformRefund"))
+      if (Object.prototype.hasOwnProperty.call(incoming, "uniformRefund"))
         upd.uniformRefund_enc = encryptField(
           String(Number(incoming.uniformRefund || 0))
         );
@@ -3839,7 +3796,7 @@ const editIndEmployeeSalaryDetails = async (req, res) => {
       upd.trAllowance = 0;
       upd.specialAllowance = 0;
       upd.foodAllowance = 0;
-      upd.uniformRefund= 0;
+      upd.uniformRefund = 0;
       upd.vda = 0;
       upd.epf = 0;
       upd.esic = 0;
@@ -4211,7 +4168,7 @@ const readSalarySlipTemplateById = async (req, res) => {
         trAllowance: formatINR(mapped.salary.trAllowance),
         specialAllowance: formatINR(mapped.salary.specialAllowance),
         foodAllowance: formatINR(mapped.salary.foodAllowance),
-        uniformRefund: formatINR(mapped.salary.uniformRefund),    
+        uniformRefund: formatINR(mapped.salary.uniformRefund),
         vda: formatINR(mapped.salary.vda),
         epf: formatINR(mapped.salary.epf),
         esic: formatINR(mapped.salary.esic),
@@ -4636,6 +4593,7 @@ module.exports = {
   deleteDepartmentUnderEachCompany,
   createEmployeeRecord,
   viewDepartmentEmployeesUnderCompany,
+  shareEmployeeLoginCredentials,
   editDepartmentEmployeeUnderCompany,
   deleteDepartmentEmployeeUnderCompany,
   createSalaryDetails,

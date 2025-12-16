@@ -73,6 +73,10 @@ router.get(
   "/admin/companies/:companyId/departments/:deptId/employees",
   adminController.viewDepartmentEmployeesUnderCompany
 );
+router.post(
+  "/admin/companies/:companyId/departments/:deptId/employees/:employeeId/share-credentials",
+  adminController.shareEmployeeLoginCredentials
+);
 router.put(
   "/admin/companies/:companyId/departments/:deptId/employees/:employeeId",
   adminController.editDepartmentEmployeeUnderCompany

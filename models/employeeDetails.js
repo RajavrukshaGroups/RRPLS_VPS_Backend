@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { decryptField } = require("../utils/encryption");
+const bcrypt = require("bcrypt");
 
 const employeeDetailsSchema = new mongoose.Schema(
   {
@@ -79,7 +80,20 @@ const employeeDetailsSchema = new mongoose.Schema(
     vdaEnc: { type: String, default: null },
     foodAllowanceEnc: { type: String, default: null },
     uniformRefundEnc: { type: String, default: null },
+    password: {
+      type: String,
+      select: false,
+      default: null, // ✅ VERY IMPORTANT
+    },
+    credentialsSent: {
+      type: Boolean,
+      default: false,
+    },
+    credentialsSentAt: {
+      type: Date,
+    },
   },
+
   {
     timestamps: true,
     toObject: { virtuals: true },

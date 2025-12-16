@@ -157,7 +157,8 @@ const adminVerifyOTP = async (req, res) => {};
 
 const addCompany = async (req, res) => {
   try {
-    const { companyName, companyAddress, companyEmail } = req.body;
+    const { companyName, companyAddress, companyEmail, companyShortCode } =
+      req.body;
     const file = req.file;
 
     // Validate companyName
@@ -181,6 +182,17 @@ const addCompany = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Company address is required.",
+      });
+    }
+
+    if (
+      !companyShortCode ||
+      typeof companyShortCode !== "string" ||
+      companyShortCode.trim().length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Company short code is required.",
       });
     }
 
@@ -232,6 +244,7 @@ const addCompany = async (req, res) => {
       companyName: companyName.trim(),
       companyAddress: companyAddress.trim(),
       companyEmail: companyEmail.trim(),
+      companyShortCode: companyShortCode.trim(),
       companyLogo: { url, filename },
     });
 
@@ -290,7 +303,8 @@ function escapeRegExp(string) {
 const updateCompanyDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    const { companyName, companyAddress, companyEmail } = req.body;
+    const { companyName, companyAddress, companyEmail, companyShortCode } =
+      req.body;
     const file = req.file;
 
     if (
@@ -315,6 +329,17 @@ const updateCompanyDetails = async (req, res) => {
     }
 
     if (
+      !companyShortCode ||
+      typeof companyShortCode !== "string" ||
+      companyShortCode.trim().length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or missing company short code.",
+      });
+    }
+
+    if (
       !companyEmail ||
       !/^\S+@\S+\.\S+$/.test(companyEmail) ||
       companyEmail.trim().length === 0
@@ -327,6 +352,7 @@ const updateCompanyDetails = async (req, res) => {
     const trimmedName = companyName.trim();
     const trimmedAddress = companyAddress.trim();
     const trimmedEmail = companyEmail.trim();
+    const trimmedCompanyShortCode = companyShortCode.trim();
 
     // -------------- DUPLICATE CHECK --------------
     // case-insensitive exact match (anchored)
@@ -349,6 +375,7 @@ const updateCompanyDetails = async (req, res) => {
       companyName: trimmedName,
       companyAddress: trimmedAddress,
       companyEmail: trimmedEmail,
+      companyShortCode: trimmedCompanyShortCode,
     };
 
     if (file) {
@@ -1592,7 +1619,7 @@ const shareEmployeeLoginCredentials = async (req, res) => {
     // 8️⃣ Email content
     const mailOptions = {
       // from: process.env.FROM_EMAIL,
-      from:process.env.ADMIN_EMAIL,
+      from: process.env.ADMIN_EMAIL,
       to: employee.email,
       subject: "Your Employee Login Credentials",
       html: `
@@ -1633,7 +1660,6 @@ const shareEmployeeLoginCredentials = async (req, res) => {
     });
   }
 };
-
 
 // const editDepartmentEmployeeUnderCompany = async (req, res) => {
 //   try {

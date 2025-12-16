@@ -1,3 +1,4 @@
+const { required } = require("joi");
 const mongoose = require("mongoose");
 
 const adminCompanySchema = new mongoose.Schema(
@@ -14,6 +15,10 @@ const adminCompanySchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
+    },
+    companyShortCode: {
+      type: String,
+      required: true,
     },
   },
   { timestamps: true }

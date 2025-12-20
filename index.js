@@ -8,7 +8,9 @@ const { dbConnect } = require("./config/config.js");
 const userRoute = require("./routes/routes.js");
 const bulkUploadRoutes = require("./routes/bulkUploadRoutes.js");
 const app = express();
-const port = 5000;
+// const port = 5000;
+const port = process.env.PORT || 5000;
+
 // const port = 3000;
 
 //for salary ejs reciept- // View engine (EJS) and views dir
@@ -27,12 +29,23 @@ app.use(express.json());
 dbConnect();
 
 // Enable CORS
+// app.use(
+//   cors({
+//     // origin: 'https://admin-panel.rajavrukshagroup.in', // Replace with your frontend URL
+//     origin: "https://admin-panel.rajavrukshagroup.in", // Replace with your frontend URL
+//     // origin: "http://localhost:5173", // Replace with your frontend URL
+//     credentials: true, // Allow cookies or authorization headers
+//   })
+// );
+
 app.use(
   cors({
-    // origin: 'https://admin-panel.rajavrukshagroup.in', // Replace with your frontend URL
-    origin: "https://admin-panel.rajavrukshagroup.in", // Replace with your frontend URL
-    // origin: "http://localhost:5173", // Replace with your frontend URL
-    credentials: true, // Allow cookies or authorization headers
+    origin: [
+      "https://admin-panel.rajavrukshagroup.in",
+      // "https://rrplserver.rajavrukshagroup.in",
+      // "http://localhost:5173",
+    ],
+    credentials: true,
   })
 );
 

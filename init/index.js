@@ -3,6 +3,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const adminLogin = require("../models/adminModel.js"); // adjust path if needed
 const loginDetails = require("./data.js"); // your array of {email,password}
+const employees = require("../models/employeeDetails.js");
 const { encryptField } = require("../utils/encryption.js"); // adjust path to your encrypt/decrypt file
 
 // const MONGO_URL = "mongodb://localhost:27017/RRPL_Admin";
@@ -35,8 +36,9 @@ const main = async () => {
     });
 
     // Insert. Use ordered:false so duplicates won't stop the whole batch.
-    const result = await adminLogin.insertMany(toInsert, { ordered: false });
+    // const result = await adminLogin.insertMany(toInsert, { ordered: false });
     // const result = await adminLogin.deleteMany({});
+    const result = await employees.deleteMany({});
     console.log("inserted documents:", result.length);
 
     await mongoose.connection.close();

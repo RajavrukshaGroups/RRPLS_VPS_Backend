@@ -6,6 +6,7 @@ const path = require("path");
 const cors = require("cors");
 const { dbConnect } = require("./config/config.js");
 const userRoute = require("./routes/routes.js");
+const bulkUploadRoutes = require("./routes/bulkUploadRoutes.js");
 const app = express();
 const port = 5000;
 // const port = 3000;
@@ -41,6 +42,7 @@ app.use(
 
 // Routes
 app.use("/", userRoute);
+app.use("/bulk", bulkUploadRoutes);
 
 // Handle preflight requests
 app.options("*", cors());

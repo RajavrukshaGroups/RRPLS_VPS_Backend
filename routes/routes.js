@@ -85,6 +85,7 @@ router.delete(
   "/admin/companies/:companyId/departments/:deptId/employees/:employeeId",
   adminController.deleteDepartmentEmployeeUnderCompany
 );
+router.get("/admin/total-employees", adminController.getTotalEmployeesCount);
 
 //admin-employees-->salary
 router.post(

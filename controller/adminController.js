@@ -1199,6 +1199,7 @@ const createEmployeeRecord = async (req, res) => {
 
       childrenName: body.childrenName,
       childrenAadharNumber: body.childrenAadharNumber,
+      pendingDocuments: body.pendingDocuments,
 
       aadhar: body.aadhar
         ? encryptField(String(body.aadhar).trim())
@@ -1407,9 +1408,9 @@ const viewDepartmentEmployeesUnderCompany = async (req, res) => {
         statusWorking:
           typeof e.statusWorking === "boolean"
             ? e.statusWorking
-            : e.status === "working"
+            : e.status === "Working"
             ? true
-            : e.status === "not_working"
+            : e.status === "Not Working"
             ? false
             : null,
 
@@ -1477,7 +1478,7 @@ const viewDepartmentEmployeesUnderCompany = async (req, res) => {
           typeof e.isMarried === "boolean"
             ? e.isMarried
             : e.maritalStatus
-            ? String(e.maritalStatus).toLowerCase() === "married"
+            ? String(e.maritalStatus) === "Married"
             : null,
 
         fatherName: e.fatherName ?? null,
@@ -1513,6 +1514,7 @@ const viewDepartmentEmployeesUnderCompany = async (req, res) => {
         emergencyContactName: e.emergencyContactName ?? null,
         emergencyContactNumber: e.emergencyContactNumber ?? null,
         emergencyContactRelation: e.emergencyContactRelation ?? null,
+        pendingDocuments: e.pendingDocuments ?? null,
 
         nomineeName: e.nomineeName ?? null,
         nomineeRelationship: e.nomineeRelationship ?? null,
@@ -2193,14 +2195,14 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
 
     // status: accept either boolean flag (statusWorking) or string
     if (body.statusWorking !== undefined) {
-      updates.status = body.statusWorking ? "working" : "not_working";
+      updates.status = body.statusWorking ? "Working" : "Not Working";
       updates.statusWorking = Boolean(body.statusWorking);
     } else if (body.status !== undefined) {
       // if provided as string, normalize
       const s = body.status ? String(body.status).trim().toLowerCase() : "";
-      if (s === "working" || s === "not_working" || s === "not working") {
-        updates.status = s === "not working" ? "not_working" : s;
-        updates.statusWorking = s === "working";
+      if (s === "Working" || s === "Not Working") {
+        updates.status = s === "Not Working" ? "Not Working" : s;
+        updates.statusWorking = s === "Working";
       } else if (s === "") {
         updates.status = undefined;
         updates.statusWorking = undefined;
@@ -2208,7 +2210,7 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
         // accept other strings but still set boolean if it looks like working
         updates.status = String(body.status).trim();
         updates.statusWorking =
-          s === "working" || s === "true" || s === "1" ? true : false;
+          s === "Working" || s === "true" || s === "1" ? true : false;
       }
     }
 
@@ -2329,6 +2331,7 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
       "emergencyContactRelation",
       "nomineeName",
       "nomineeRelationship",
+      "pendingDocuments",
     ];
     optionalStrings.forEach((k) => {
       if (body[k] !== undefined) {
@@ -2339,7 +2342,7 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
     // marital boolean flag (isMarried) if provided
     if (body.isMarried !== undefined) {
       updates.isMarried = Boolean(body.isMarried);
-      updates.maritalStatus = Boolean(body.isMarried) ? "married" : "unmarried";
+      updates.maritalStatus = Boolean(body.isMarried) ? "Married" : "Unmarried";
     } else if (body.maritalStatus !== undefined) {
       const m = body.maritalStatus ? String(body.maritalStatus).trim() : "";
       if (m === "") {
@@ -2347,7 +2350,7 @@ const editDepartmentEmployeeUnderCompany = async (req, res) => {
         updates.isMarried = undefined;
       } else {
         updates.maritalStatus = m;
-        updates.isMarried = m.toLowerCase() === "married";
+        updates.isMarried = m === "Married";
       }
     }
 
@@ -2740,6 +2743,21 @@ const deleteDepartmentEmployeeUnderCompany = async (req, res) => {
   }
 };
 
+const getTotalEmployeesCount = async (req, res) => {
+  try {
+    const totalEmployees = await Employee.countDocuments();
+    return res.status(200).json({
+      success: true,
+      totalEmployees,
+    });
+  } catch (err) {
+    console.err("get employeescount error", err);
+    return res.status(500).json({
+      success: false,
+      message: "failed to fetch the total employees count",
+    });
+  }
+};
 const createSalaryDetails = async (req, res) => {
   try {
     const { companyId, deptId, employeeId } = req.params;
@@ -4622,6 +4640,7 @@ module.exports = {
   shareEmployeeLoginCredentials,
   editDepartmentEmployeeUnderCompany,
   deleteDepartmentEmployeeUnderCompany,
+  getTotalEmployeesCount,
   createSalaryDetails,
   getIndEmployeeSalaryDetails,
   fetchStoredEmployeeSalaryDetails,

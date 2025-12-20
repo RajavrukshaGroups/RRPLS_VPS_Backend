@@ -7,8 +7,8 @@
 
 const loginDetails = [
   {
-    email: "admi",
-    password: "rrlp",
+    email: "admin@123",
+    password: "rrlp123",
   },
 ];
 

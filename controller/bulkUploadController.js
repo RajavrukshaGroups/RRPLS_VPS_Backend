@@ -199,6 +199,7 @@ const bulkUploadEmployeeData = async (req, res) => {
         nomineeName: data["Nominee"],
         nomineeRelationship: data["Nominee Relationship"],
         pendingDocuments: data["Pending"],
+        source: "google_sheet",
       });
 
       inserted++;
@@ -225,17 +226,17 @@ const bulkUploadEmployeeData = async (req, res) => {
 
 const deleteUploadedEmployeeData = async (req, res) => {
   try {
-    const result = await Employee.deleteMany({});
+    const result = await Employee.deleteMany({ source: "google_sheet" });
     return res.status(200).json({
       success: true,
-      message: "all employee data deleted successfully",
+      message: "Google Sheet uploaded employee data deleted successfully",
       deletedCount: result.deletedCount,
     });
   } catch (err) {
     console.error("delete employee data error:", err);
     return res.status(500).json({
       success: false,
-      message: "failed to delete employee records",
+      message: "Failed to delete Google Sheet employee records",
       error: err.message,
     });
   }

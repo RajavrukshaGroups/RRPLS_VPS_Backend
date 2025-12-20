@@ -1235,6 +1235,7 @@ const createEmployeeRecord = async (req, res) => {
       uniformRefundEnc: body.uniformRefund
         ? encryptField(String(body.uniformRefund).trim())
         : undefined,
+      source: "website",
     };
 
     // strip undefined fields

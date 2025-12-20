@@ -93,6 +93,12 @@ const employeeDetailsSchema = new mongoose.Schema(
     credentialsSentAt: {
       type: Date,
     },
+    source: {
+      type: String,
+      enum: ["google_sheet", "website"],
+      required: true,
+      default: "website",
+    },
   },
 
   {

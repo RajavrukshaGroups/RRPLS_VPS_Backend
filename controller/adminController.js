@@ -4087,7 +4087,8 @@ const readSalarySlipTemplateById = async (req, res) => {
         name: employee?.employeeName || "",
         designation: employee?.designation || "",
         // doj: employee?.dateOfJoining ? new Date(employee.dateOfJoining) : null,
-        doj: formatDateDDMMYYYY(employee?.dateOfJoining),
+        // doj: formatDateDDMMYYYY(employee?.dateOfJoining),
+        doj: employee?.dateOfJoining || null,
         aadhar: readEmployeeText("aadhar", "aadhar"),
         UAN: readEmployeeText("UAN", "UAN"),
 
